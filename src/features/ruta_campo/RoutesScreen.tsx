@@ -20,17 +20,19 @@ import { manipulateAsync, SaveFormat } from "expo-image-manipulator";
 import { CameraView, useCameraPermissions } from "expo-camera";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { useAuth } from "../AuthContext";
-import { Badge, Button, Card, Empty, Header, Loading, Screen } from "../ui";
-import { C, money } from "../theme";
-import SignaturePad from "../SignaturePad";
+import { useAuth } from "../../shared/context/AuthContext";
+import { Badge, Button, Card, Empty, Header, Loading, Screen } from "../../shared/ui/ui";
+import { C, money } from "../../shared/theme/theme";
+import SignaturePad from "../../features/ruta_campo/components/SignaturePad";
+
+
 import {
   cacheTodayRoute,
   createOfflineVisitId,
   enqueueVisit,
   getCachedTodayRoute,
   syncPendingVisits,
-} from "../offlineSync";
+} from "../../shared/sync/offlineSync";
 const FIELD_DRAFT_KEY = "radar360_active_field_draft";
 const results = [
   {

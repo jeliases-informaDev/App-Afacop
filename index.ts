@@ -1,6 +1,5 @@
 import { registerRootComponent } from 'expo';
-import './src/offlineSync';
-
+import './src/shared/sync/offlineSync';
 import App from './App';
 
 // registerRootComponent calls AppRegistry.registerComponent('main', () => App);

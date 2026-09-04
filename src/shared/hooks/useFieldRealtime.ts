@@ -1,8 +1,8 @@
 import { useEffect } from "react";
 import { AppState } from "react-native";
 import { io } from "socket.io-client";
-import { API_URL } from "./api";
-import { useAuth } from "./AuthContext";
+import { API_URL } from "../api/api";
+import { useAuth } from "../context/AuthContext";
 
 const FIELD_EVENTS = [
   "route_changed",

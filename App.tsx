@@ -15,20 +15,20 @@ import {
   useSafeAreaInsets,
 } from "react-native-safe-area-context";
 import NetInfo from "@react-native-community/netinfo";
-import { AuthProvider, useAuth } from "./src/AuthContext";
-import { C } from "./src/theme";
-import LoginScreen from "./src/screens/LoginScreen";
-import DashboardScreen from "./src/screens/DashboardScreen";
-import MapScreen from "./src/screens/MapScreen";
-import ClientsScreen from "./src/screens/ClientsScreen";
-import RoutesScreen from "./src/screens/RoutesScreen";
-import MoreScreen from "./src/screens/MoreScreen";
-import { useFieldRealtime } from "./src/useFieldRealtime";
-import { useAdvisorLocation } from "./src/useAdvisorLocation";
+import { AuthProvider, useAuth } from "./src/shared/context/AuthContext";
+import { C } from "./src/shared/theme/theme";
+import LoginScreen from "./src/features/auth/LoginScreen";
+import DashboardScreen from "./src/features/dashboard/DashboardScreen";
+import MapScreen from "./src/features/mapa_operativo/MapScreen";
+import ClientsScreen from "./src/features/cartera/ClientsScreen";
+import RoutesScreen from "./src/features/ruta_campo/RoutesScreen";
+import MoreScreen from "./src/features/perfil/MoreScreen";
+import { useFieldRealtime } from "./src/shared/hooks/useFieldRealtime";
+import { useAdvisorLocation } from "./src/shared/hooks/useAdvisorLocation";
 import {
   registerOfflineSyncTask,
   syncPendingVisits,
-} from "./src/offlineSync";
+} from "./src/shared/sync/offlineSync";
 type Tab = "principal" | "rutas" | "mapa" | "clientes" | "mas";
 const tabs: any[] = [
   { key: "principal", label: "Hoy", icon: "home-outline", active: "home" },

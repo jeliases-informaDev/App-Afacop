@@ -12,10 +12,10 @@ import {
 import { SafeAreaView } from "react-native-safe-area-context";
 import { LinearGradient } from "expo-linear-gradient";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
-import { useAuth } from "../AuthContext";
-import { Button, Input } from "../ui";
-import { C } from "../theme";
-import { request } from "../api";
+import { useAuth } from "../../shared/context/AuthContext";
+import { Button, Input } from "../../shared/ui/ui";
+import { C } from "../../shared/theme/theme";
+import { request } from "../../shared/api/api";
 
 export default function LoginScreen() {
   const { width } = useWindowDimensions();
@@ -86,8 +86,7 @@ export default function LoginScreen() {
               <View style={s.brandTop}>
                 <View style={s.logoBox}>
                   <Image
-                    source={require("../../assets/radar-logo.png")}
-                    resizeMode="contain"
+                        source={require("../../../assets/radar-logo.png")}                    resizeMode="contain"
                     style={s.logo}
                   />
                 </View>

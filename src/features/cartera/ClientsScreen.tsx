@@ -3,9 +3,9 @@ import { Alert, Linking, Platform, Pressable, RefreshControl, ScrollView, StyleS
 import { MaterialCommunityIcons } from "@expo/vector-icons";
 import * as SecureStore from "expo-secure-store";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { useAuth } from "../AuthContext";
-import { Badge, Card, Empty, Input, Loading, Screen } from "../ui";
-import { C, money } from "../theme";
+import { useAuth } from "../../shared/context/AuthContext";
+import { Badge, Card, Empty, Input, Loading, Screen } from "../../shared/ui/ui";
+import { C, money } from "../../shared/theme/theme";
 
 const filters = [
   { key: "TODOS", label: "Todos", color: C.primary, background: "#E8EEFF" },

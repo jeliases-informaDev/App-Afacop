@@ -4,7 +4,7 @@ import * as FileSystem from "expo-file-system/legacy";
 import * as SecureStore from "expo-secure-store";
 import * as SQLite from "expo-sqlite";
 import * as TaskManager from "expo-task-manager";
-import { API_URL } from "./api";
+import { API_URL } from "../api/api";
 
 export const OFFLINE_SYNC_TASK = "radar360-offline-visit-sync";
 const TOKEN_KEY = "radar_token";

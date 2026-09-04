@@ -1,10 +1,10 @@
 import React, { useCallback, useEffect, useState } from "react";
 import { Alert, Linking, Pressable, StyleSheet, Text, View } from "react-native";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
-import { useAuth } from "../AuthContext";
-import { Button, Card, Header, Screen } from "../ui";
-import { C } from "../theme";
-import { pendingVisitCount, syncPendingVisits } from "../offlineSync";
+import { useAuth } from "../../shared/context/AuthContext";
+import { Button, Card, Header, Screen } from "../../shared/ui/ui";
+import { C } from "../../shared/theme/theme";
+import { pendingVisitCount, syncPendingVisits } from "../../shared/sync/offlineSync";
 
 const advisorDisplayName = (user: {
   nombres?: string;

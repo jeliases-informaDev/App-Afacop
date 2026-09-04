@@ -17,8 +17,8 @@ import * as Location from "expo-location";
 import { WebView } from "react-native-webview";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { useAuth } from "../AuthContext";
-import { C } from "../theme";
+import { useAuth } from "../../shared/context/AuthContext";
+import { C } from "../../shared/theme/theme";
 
 const filters = [
   "TODOS",

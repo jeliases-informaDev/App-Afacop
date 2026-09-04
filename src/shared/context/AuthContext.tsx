@@ -2,7 +2,7 @@ import React, { createContext, useContext, useEffect, useMemo, useState } from "
 import { Platform } from "react-native";
 import * as SecureStore from "expo-secure-store";
 import NetInfo from "@react-native-community/netinfo";
-import { ApiError, request } from "./api";
+import { ApiError, request } from "../api/api";
 
 type User = { id?: string; username: string; rol: string; nombres?: string; apellidos?: string; id_asesor?: number | null };
 type AuthValue = {
