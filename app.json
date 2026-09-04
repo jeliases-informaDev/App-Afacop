@@ -1,0 +1,72 @@
+{
+  "expo": {
+    "name": "Radar 360°",
+    "slug": "informaperu",
+    "version": "1.0.5",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "userInterfaceStyle": "light",
+    "backgroundColor": "#F4F7FD",
+    "androidStatusBar": {
+      "barStyle": "dark-content",
+      "backgroundColor": "#F4F7FD",
+      "translucent": false,
+      "hidden": false
+    },
+    "scheme": "radar360",
+    "ios": {
+      "supportsTablet": true
+    },
+    "android": {
+      "package": "pe.informaperu.radar360",
+      "versionCode": 6,
+      "softwareKeyboardLayoutMode": "resize",
+      "permissions": [
+        "android.permission.ACCESS_COARSE_LOCATION",
+        "android.permission.ACCESS_FINE_LOCATION",
+        "android.permission.CAMERA",
+        "android.permission.INTERNET",
+        "android.permission.RECORD_AUDIO"
+      ],
+      "adaptiveIcon": {
+        "backgroundColor": "#FFFFFF",
+        "foregroundImage": "./assets/android-icon-foreground.png"
+      },
+      "predictiveBackGestureEnabled": true
+    },
+    "web": {
+      "favicon": "./assets/favicon.png"
+    },
+    "plugins": [
+      "expo-secure-store",
+      [
+        "expo-location",
+        {
+          "locationWhenInUsePermission": "Mi Radar usa tu ubicación para gestionar rutas y visitas en campo."
+        }
+      ],
+      [
+        "expo-image-picker",
+        {
+          "cameraPermission": "Mi Radar usa la cámara para registrar evidencia de la gestión realizada.",
+          "photosPermission": "Mi Radar accede a imágenes únicamente para adjuntar evidencia de gestión."
+        }
+      ],
+      [
+        "expo-camera",
+        {
+          "cameraPermission": "Mi Radar usa la cámara para registrar las evidencias obligatorias de cada gestión."
+        }
+      ],
+      "expo-font",
+      "expo-sqlite",
+      "expo-background-task"
+    ],
+    "extra": {
+      "eas": {
+        "projectId": "74bdebb3-67cc-4cdd-9d3a-829f9e1c43b7"
+      }
+    },
+    "owner": "informaperus-app"
+  }
+}
