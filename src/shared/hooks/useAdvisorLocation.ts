@@ -2,23 +2,30 @@ import { useEffect, useRef, useState } from "react";
 import { AppState, Platform } from "react-native";
 import * as Location from "expo-location";
 import { useAuth } from "../context/AuthContext";
+
 export type AdvisorLocation = {
   latitude: number;
   longitude: number;
   accuracy: number | null;
 };
+
 export function useAdvisorLocation(
   api: <T>(path: string, options?: RequestInit) => Promise<T>,
   enabled: boolean,
 ) {
-  const {user} = useAuth();
+  const { user } = useAuth();
   const [location, setLocation] = useState<AdvisorLocation | null>(null);
   const [error, setError] = useState("");
   const apiRef = useRef(api);
+  const userRef = useRef(user);
 
   useEffect(() => {
     apiRef.current = api;
   }, [api]);
+
+  useEffect(() => {
+    userRef.current = user;
+  }, [user]);
 
   useEffect(() => {
     if (!enabled) {
@@ -35,14 +42,17 @@ export function useAdvisorLocation(
     let lastSent = 0;
     let startGeneration = 0;
     let appState = AppState.currentState;
+
     const clearBackgroundTimer = () => {
       if (backgroundTimer) clearTimeout(backgroundTimer);
       backgroundTimer = null;
     };
+
     const stop = () => {
       subscription?.remove();
       subscription = null;
     };
+
     const start = async () => {
       if (!active || appState !== "active" || subscription) return;
       if (starting) {
@@ -89,9 +99,6 @@ export function useAdvisorLocation(
         }
         const nextSubscription = await Location.watchPositionAsync(
           {
-            // En campo necesitamos el receptor GPS, no solo una ubicación
-            // aproximada por Wi-Fi o antenas. Esto también permite que Android
-            // muestre su indicador de ubicación mientras la app está en uso.
             accuracy: Location.Accuracy.High,
             mayShowUserSettingsDialog: true,
             timeInterval: 5_000,
@@ -109,10 +116,11 @@ export function useAdvisorLocation(
             if (now - lastSent < 7000) return;
             lastSent = now;
             try {
+              const asesorId = Number(userRef.current?.id_asesor || userRef.current?.id);
               await apiRef.current("/api/campo/ubicacion", {
                 method: "PATCH",
                 body: JSON.stringify({
-                  id: Number(user?.id_asesor),
+                  id: isNaN(asesorId) ? undefined : asesorId,
                   latitud: next.latitude,
                   longitud: next.longitude,
                   precision: next.accuracy,
@@ -139,6 +147,7 @@ export function useAdvisorLocation(
         }
       }
     };
+
     start();
     stateSubscription = AppState.addEventListener("change", (state) => {
       const previous = appState;
@@ -146,8 +155,7 @@ export function useAdvisorLocation(
       if (state === "active" && previous !== "active") {
         clearBackgroundTimer();
         start();
-      }
-      else if (state === "background") {
+      } else if (state === "background") {
         clearBackgroundTimer();
         backgroundTimer = setTimeout(() => {
           if (appState !== "active") {
@@ -157,6 +165,7 @@ export function useAdvisorLocation(
         }, 1500);
       }
     });
+
     return () => {
       active = false;
       startGeneration += 1;
@@ -165,5 +174,6 @@ export function useAdvisorLocation(
       stateSubscription?.remove();
     };
   }, [enabled]);
+
   return { location, error };
 }
