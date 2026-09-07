@@ -27,6 +27,7 @@ const filters = [
   "REPROGRAMADO",
   "NO_ENCONTRADO",
 ];
+
 const labels: Record<string, string> = {
   TODOS: "Todos",
   PENDIENTE: "Asignado",
@@ -35,6 +36,7 @@ const labels: Record<string, string> = {
   NO_ENCONTRADO: "No encontrado",
   ASESOR: "Ubicación del asesor",
 };
+
 const colors: Record<string, string> = {
   PENDIENTE: "#2563EB",
   GESTIONADO: "#10B981",
@@ -69,7 +71,7 @@ function mapHtml(points: any[]) {
           .join(" ") || "Cliente sin nombre",
       dni: point.numero_documento || "",
       district: point.distrito || "Sin distrito",
-    address: point.direccion || "Dirección no registrada",
+      address: point.direccion || "Dirección no registrada",
       phone: point.telefono || "No registrado",
       debt:
         Number(point.deuda_vigente || 0) +
@@ -102,11 +104,14 @@ export default function MapScreen({ refreshRevision = 0, currentLocation }: { re
   const [all, setAll] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+
   const points = useMemo(
     () => all.filter((point) => filter === "TODOS" || point.estado === filter),
     [all, filter],
   );
+
   const html = useMemo(() => mapHtml(points), [points]);
+
   const advisorPayload = useMemo(() => currentLocation ? {
     id: "advisor-self",
     lat: currentLocation.latitude,
@@ -123,6 +128,7 @@ export default function MapScreen({ refreshRevision = 0, currentLocation }: { re
     label: labels.ASESOR,
     color: colors.ASESOR,
   } : null, [currentLocation]);
+
   const syncAdvisor = useCallback(() => {
     web.current?.injectJavaScript(
       `window.updateAdvisor&&window.updateAdvisor(${JSON.stringify(advisorPayload)});true;`,
@@ -133,11 +139,11 @@ export default function MapScreen({ refreshRevision = 0, currentLocation }: { re
     syncAdvisor();
   }, [syncAdvisor]);
 
-  const load = useCallback(async () => {
+const load = useCallback(async () => {
     setLoading(true);
     try {
       setError("");
-      const response: any = await api("/api/campo/ruta-hoy");
+      const response: any = await api('/api/campo/ruta-hoy');
       const next = (response.data?.rutas_clientes || [])
         .map(normalizePoint)
         .filter(
@@ -157,6 +163,7 @@ export default function MapScreen({ refreshRevision = 0, currentLocation }: { re
     const timer = setInterval(load, 30000);
     return () => clearInterval(timer);
   }, [load]);
+
   useEffect(() => {
     if (refreshRevision > 0) load();
   }, [refreshRevision, load]);
