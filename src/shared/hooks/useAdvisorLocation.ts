@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { AppState, Platform } from "react-native";
 import * as Location from "expo-location";
+import { useAuth } from "../context/AuthContext";
 export type AdvisorLocation = {
   latitude: number;
   longitude: number;
@@ -10,6 +11,7 @@ export function useAdvisorLocation(
   api: <T>(path: string, options?: RequestInit) => Promise<T>,
   enabled: boolean,
 ) {
+  const {user} = useAuth();
   const [location, setLocation] = useState<AdvisorLocation | null>(null);
   const [error, setError] = useState("");
   const apiRef = useRef(api);
@@ -110,6 +112,7 @@ export function useAdvisorLocation(
               await apiRef.current("/api/campo/ubicacion", {
                 method: "PATCH",
                 body: JSON.stringify({
+                  id: Number(user?.id_asesor),
                   latitud: next.latitude,
                   longitud: next.longitude,
                   precision: next.accuracy,
