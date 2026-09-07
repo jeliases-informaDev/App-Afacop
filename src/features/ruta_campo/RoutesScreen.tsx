@@ -503,7 +503,7 @@ export default function RoutesScreen({
                         {item.cliente.apellido_materno}
                       </Text>
                       <Text style={s.clientMeta}>
-                        DNI {item.cliente.dni} ·{" "}
+                        DNI {item.cliente.numero_documento} ·{" "}
                         {item.cliente.distrito || "Sin distrito"}
                       </Text>
                       <Text numberOfLines={2} style={s.address}>

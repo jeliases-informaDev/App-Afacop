@@ -140,7 +140,7 @@ export default function ClientsScreen({ refreshRevision = 0, onDetailVisibilityC
       if (filter === "HOY" && !isScheduledToday) return false;
       if (filter === "PENDIENTE" && item.estado_gestion !== "ASIGNADO") return false;
       if (!["TODOS", "HOY", "PENDIENTE"].includes(filter) && item.estado_gestion !== filter) return false;
-      return !query || [fullName(item), item.dni, item.distrito, item.direccion].filter(Boolean).join(" ").toLocaleLowerCase("es").includes(query);
+      return !query || [fullName(item), item.numero_documento, item.distrito, item.direccion].filter(Boolean).join(" ").toLocaleLowerCase("es").includes(query);
     });
   }, [all, filter, search]);
   const totalDebt = useMemo(() => all.reduce((sum, item) => sum + debt(item), 0), [all]);
@@ -205,7 +205,7 @@ export default function ClientsScreen({ refreshRevision = 0, onDetailVisibilityC
       <View style={s.modalHead}><View style={s.modalHeadText}><Text style={s.modalEyebrow}>FICHA DE CARTERA</Text><Text style={s.modalTitle}>{fullName(selected)}</Text></View><Pressable onPress={dismissClientDetail} style={s.close}><MaterialCommunityIcons name="close" size={22} color={C.text} /></Pressable></View>
       <ScrollView contentContainerStyle={s.modalBody} showsVerticalScrollIndicator={false}>
         <View style={s.statusRow}><Badge status={selected.estado_gestion || "ASIGNADO"} /><View style={s.statusDates}>{selected.programado_hoy?<Text style={s.todayTag}>PROGRAMADO HOY</Text>:null}<Text style={s.assignedDate}>Asignado: {formatDate(selected.fecha_asignacion)}</Text></View></View>
-        <View style={s.info}><View style={s.infoIcon}><MaterialCommunityIcons name="card-account-details-outline" size={20} color={C.primary} /></View><View style={s.infoCopy}><Text style={s.small}>DNI</Text><Text style={s.infoValue}>{selected.dni || "No registrado"}</Text></View></View>
+        <View style={s.info}><View style={s.infoIcon}><MaterialCommunityIcons name="card-account-details-outline" size={20} color={C.primary} /></View><View style={s.infoCopy}><Text style={s.small}>DNI</Text><Text style={s.infoValue}>{selected.numero_documento || "No registrado"}</Text></View></View>
         <Pressable onPress={() => callClient(selected)} style={({ pressed }) => [s.info, pressed && s.infoPressed]} accessibilityRole="button" accessibilityLabel="Llamar al cliente">
           <View style={s.infoIcon}><MaterialCommunityIcons name="phone-outline" size={20} color={C.primary} /></View><View style={s.infoCopy}><Text style={s.small}>TELÉFONO</Text><Text style={s.infoValue}>{selected.telefono || "No registrado"}</Text></View><MaterialCommunityIcons name="chevron-right" size={20} color="#A4ADBA" />
         </Pressable>
@@ -254,7 +254,7 @@ export default function ClientsScreen({ refreshRevision = 0, onDetailVisibilityC
       {error ? <Card style={s.errorCard}><MaterialCommunityIcons name="cloud-alert-outline" size={22} color={C.red} /><Text style={s.errorText}>{error}</Text></Card> : null}
       {loading ? <Loading /> : data.length ? data.map((item) =>
         <Pressable key={item.id_cliente} onPress={() => showClientDetail(item)} style={({ pressed }) => pressed && { opacity: 0.72 }}>
-          <Card><View style={s.top}><View style={s.avatar}><Text style={s.avatarText}>{(item.nombres || "C")[0]}</Text></View><View style={s.identity}><Text style={s.name}>{fullName(item)}</Text><Text style={s.meta}>DNI {item.dni || "—"} · {item.distrito || "Sin distrito"}</Text></View><MaterialCommunityIcons name="chevron-right" size={23} color="#A4ADBA" /></View><View style={s.divider} /><View style={s.cardBottom}><View><Text style={s.small}>DEUDA TOTAL</Text><Text style={s.amount}>{money(debt(item))}</Text></View><Badge status={item.estado_gestion || "ASIGNADO"} /></View></Card>
+          <Card><View style={s.top}><View style={s.avatar}><Text style={s.avatarText}>{(item.nombres || "C")[0]}</Text></View><View style={s.identity}><Text style={s.name}>{fullName(item)}</Text><Text style={s.meta}>DNI {item.numero_documento || "—"} · {item.distrito || "Sin distrito"}</Text></View><MaterialCommunityIcons name="chevron-right" size={23} color="#A4ADBA" /></View><View style={s.divider} /><View style={s.cardBottom}><View><Text style={s.small}>DEUDA TOTAL</Text><Text style={s.amount}>{money(debt(item))}</Text></View><Badge status={item.estado_gestion || "ASIGNADO"} /></View></Card>
         </Pressable>
       ) : <Empty title={all.length ? "No hay coincidencias" : "No tienes clientes asignados"} text={all.length ? "Cambia el filtro o el criterio de búsqueda." : "Las asignaciones activas realizadas en la web aparecerán aquí."} />}
       {searchFocused ? <View style={s.keyboardScrollSpace} pointerEvents="none" /> : null}
