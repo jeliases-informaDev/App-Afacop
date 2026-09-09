@@ -61,6 +61,20 @@ const totalDebt = (item: any) => {
   return Number(client.deuda_vigente || 0) + Number(client.deuda_castigada || 0) + Number(client.otras_deudas || 0);
 };
 
+// Algoritmo matemático para calcular distancia real (Haversine)
+const getDistance = (lat1: number, lon1: number, lat2: number, lon2: number) => {
+  const R = 6371e3; // Radio de la tierra en metros
+  const dLat = ((lat2 - lat1) * Math.PI) / 180;
+  const dLon = ((lon2 - lon1) * Math.PI) / 180;
+  const a =
+    Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+    Math.cos((lat1 * Math.PI) / 180) *
+      Math.cos((lat2 * Math.PI) / 180) *
+      Math.sin(dLon / 2) *
+      Math.sin(dLon / 2);
+  return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+};
+
 export default function RoutesScreen({
   refreshRevision = 0,
   onDetailVisibilityChange,
@@ -323,6 +337,79 @@ export default function RoutesScreen({
     }
   };
 
+  // SVA: Algoritmo Inteligente de Ruteo (Nearest Neighbor)
+  const optimizeRoute = async () => {
+    try {
+      setLoading(true);
+      const { status } = await Location.requestForegroundPermissionsAsync();
+      if (status !== "granted") throw new Error("Se requiere permiso de ubicación para optimizar la ruta.");
+
+      const pos = await Location.getCurrentPositionAsync({ accuracy: Location.Accuracy.High });
+      if (pos.mocked) {
+        throw new Error("Por seguridad, desactiva ubicaciones simuladas para calcular la ruta.");
+      }
+
+      let currentLat = pos.coords.latitude;
+      let currentLng = pos.coords.longitude;
+
+      const pending: any[] = [];
+      const done: any[] = [];
+      const noCoords: any[] = [];
+
+      // Categorizamos a los clientes
+      route.rutas_clientes.forEach((item: any) => {
+        if (item.estado_visita !== "PENDIENTE") {
+          done.push(item);
+        } else if (!item.cliente.latitud || !item.cliente.longitud) {
+          noCoords.push(item);
+        } else {
+          pending.push(item);
+        }
+      });
+
+      const sortedPending: any[] = [];
+      
+      // Aplicamos Algoritmo de Vecino Más Cercano
+      while (pending.length > 0) {
+        let nearestIdx = 0;
+        let minDist = Infinity;
+        for (let i = 0; i < pending.length; i++) {
+          const d = getDistance(
+            currentLat,
+            currentLng,
+            Number(pending[i].cliente.latitud),
+            Number(pending[i].cliente.longitud)
+          );
+          if (d < minDist) {
+            minDist = d;
+            nearestIdx = i;
+          }
+        }
+        const nearest = pending.splice(nearestIdx, 1)[0];
+        sortedPending.push(nearest);
+        // Actualizamos la posición actual a la del último cliente ordenado
+        currentLat = Number(nearest.cliente.latitud);
+        currentLng = Number(nearest.cliente.longitud);
+      }
+
+      // Unimos la lista (Primero pendientes ordenados, luego los sin GPS, al final los completados)
+      const newOrder = [...sortedPending, ...noCoords, ...done];
+      
+      // Reasignamos secuencias visuales
+      const updatedRoutesClients = newOrder.map((item, index) => ({
+        ...item,
+        secuencia: index + 1,
+      }));
+
+      setRoute({ ...route, rutas_clientes: updatedRoutesClients });
+      Alert.alert("Ruta Optimizada 📍", "Tus visitas han sido reordenadas estratégicamente para ahorrar tiempo y distancia.");
+    } catch (e: any) {
+      Alert.alert("No se pudo optimizar", e.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const takePhoto = async (slot: 1 | 2) => {
     try {
       const permission = cameraPermission?.granted
@@ -395,7 +482,7 @@ export default function RoutesScreen({
         accuracy: Location.Accuracy.High,
       });
 
-      // 1. SVA: BLOQUEO DE FAKE GPS (Ubicaciones simuladas)
+      // SVA: BLOQUEO DE FAKE GPS
       if (position.mocked) {
         throw new Error("Ubicación falsa detectada (Fake GPS). Desactiva las ubicaciones de prueba en tu celular para enviar una evidencia genuina.");
       }
@@ -404,19 +491,14 @@ export default function RoutesScreen({
       const clientLat = Number(selected.cliente.latitud);
       const clientLng = Number(selected.cliente.longitud);
 
-      // 2. SVA: GEOCERCA ESTRICTA (Haversine 200 metros)
+      // SVA: GEOCERCA ESTRICTA (Haversine 200 metros)
       if (clientLat && clientLng) {
-        const R = 6371e3; // Radio de la Tierra en metros
-        const lat1 = position.coords.latitude * (Math.PI / 180);
-        const lat2 = clientLat * (Math.PI / 180);
-        const deltaLat = (clientLat - position.coords.latitude) * (Math.PI / 180);
-        const deltaLng = (clientLng - position.coords.longitude) * (Math.PI / 180);
-
-        const a = Math.sin(deltaLat / 2) * Math.sin(deltaLat / 2) +
-                  Math.cos(lat1) * Math.cos(lat2) *
-                  Math.sin(deltaLng / 2) * Math.sin(deltaLng / 2);
-        const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-        const distanceInMeters = R * c;
+        const distanceInMeters = getDistance(
+          position.coords.latitude,
+          position.coords.longitude,
+          clientLat,
+          clientLng
+        );
 
         if (distanceInMeters > 200) {
           throw new Error(`Estás a ${Math.round(distanceInMeters)}m del cliente. Acércate a la dirección exacta (radio de 200m) para registrar la gestión.`);
@@ -486,7 +568,6 @@ export default function RoutesScreen({
     }
   };
 
-  // Cálculos para el Dashboard de KPIs
   const totalVisits = route?.rutas_clientes?.length || 0;
   const pendingVisits = route?.rutas_clientes?.filter((c: any) => c.estado_visita === "PENDIENTE").length || 0;
   const completedVisits = totalVisits - pendingVisits;
@@ -548,7 +629,6 @@ export default function RoutesScreen({
                 <Badge status={route.estado} />
               </View>
 
-              {/* SVA: MINI DASHBOARD KPI DE DESEMPEÑO */}
               <View style={s.kpiContainer}>
                 <View style={s.kpiBlock}>
                   <Text style={s.kpiValue}>{progressPercent}%</Text>
@@ -568,7 +648,7 @@ export default function RoutesScreen({
                 </View>
               </View>
 
-              <View style={{ marginTop: 15 }}>
+              <View style={{ marginTop: 15, gap: 10 }}>
                 {route.estado === "PROGRAMADA" ? (
                   <Button
                     title="Iniciar jornada"
@@ -582,21 +662,30 @@ export default function RoutesScreen({
                   ).length || 0;
 
                   return (
-                    <Button
-                      title={pendingCount > 0 ? `Finalizar jornada (${pendingCount} pendientes)` : "Finalizar jornada"}
-                      icon="flag-checkered"
-                      disabled={saving}
-                      onPress={() => {
-                        if (pendingCount > 0) {
-                          Alert.alert(
-                            "Ruta incompleta",
-                            `Aún tienes ${pendingCount} cliente(s) sin registrar resultado. Debes registrar el resultado de todos los clientes antes de finalizar.`
-                          );
-                          return;
-                        }
-                        status("FINALIZADA");
-                      }}
-                    />
+                    <>
+                      {/* BOTÓN INTELIGENTE DE OPTIMIZACIÓN */}
+                      <Button
+                        title="📍 Optimizar recorrido"
+                        icon="map-marker-distance"
+                        disabled={saving}
+                        onPress={optimizeRoute}
+                      />
+                      <Button
+                        title={pendingCount > 0 ? `Finalizar jornada (${pendingCount} pendientes)` : "Finalizar jornada"}
+                        icon="flag-checkered"
+                        disabled={saving}
+                        onPress={() => {
+                          if (pendingCount > 0) {
+                            Alert.alert(
+                              "Ruta incompleta",
+                              `Aún tienes ${pendingCount} cliente(s) sin registrar resultado. Debes registrar el resultado de todos los clientes antes de finalizar.`
+                            );
+                            return;
+                          }
+                          status("FINALIZADA");
+                        }}
+                      />
+                    </>
                   );
                 })() : null}
               </View>  
@@ -651,7 +740,6 @@ export default function RoutesScreen({
                         )}
                       </Text>
 
-                      {/* SVA: BOTÓN DE NAVEGACIÓN NATIVA */}
                       {item.cliente.latitud && item.cliente.longitud && item.estado_visita === "PENDIENTE" ? (
                         <Pressable 
                           style={s.navButton}
