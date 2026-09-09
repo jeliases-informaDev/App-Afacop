@@ -25,7 +25,6 @@ import { Badge, Button, Card, Empty, Header, Loading, Screen } from "../../share
 import { C, money } from "../../shared/theme/theme";
 import SignaturePad from "../../features/ruta_campo/components/SignaturePad";
 
-
 import {
   cacheTodayRoute,
   createOfflineVisitId,
@@ -33,7 +32,9 @@ import {
   getCachedTodayRoute,
   syncPendingVisits,
 } from "../../shared/sync/offlineSync";
+
 const FIELD_DRAFT_KEY = "radar360_active_field_draft";
+
 const results = [
   {
     key: "GESTIONADO",
@@ -54,10 +55,12 @@ const results = [
     color: C.red,
   },
 ];
+
 const totalDebt = (item: any) => {
   const client = item?.cliente || item || {};
   return Number(client.deuda_vigente || 0) + Number(client.deuda_castigada || 0) + Number(client.otras_deudas || 0);
 };
+
 export default function RoutesScreen({
   refreshRevision = 0,
   onDetailVisibilityChange,
@@ -86,6 +89,7 @@ export default function RoutesScreen({
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
   const [offlineMode, setOfflineMode] = useState(false);
+  
   const draftsRef = useRef(new Map<number, any>());
   const suppressAutoRestoreRef = useRef(false);
   const routeRef = useRef<any>(null);
@@ -94,14 +98,17 @@ export default function RoutesScreen({
   const formScrollRef = useRef<ScrollView>(null);
   const cameraRef = useRef<CameraView>(null);
   const [cameraPermission, requestCameraPermission] = useCameraPermissions();
+
   useEffect(() => {
     const visible = Boolean(selected) || Boolean(cameraSlot);
     onDetailVisibilityChange?.(visible);
   }, [selected, cameraSlot, onDetailVisibilityChange]);
+
   useEffect(
     () => () => onDetailVisibilityChange?.(false),
     [onDetailVisibilityChange],
   );
+
   const persistDraft = async (clientId: number, values: any) => {
     if (!clientId) return;
     const draft = { clientId, routeId: route?.id_ruta, savedAt: Date.now(), ...values };
@@ -122,6 +129,7 @@ export default function RoutesScreen({
     };
     await SecureStore.setItemAsync(FIELD_DRAFT_KEY, JSON.stringify(durableDraft));
   };
+
   const load = useCallback(async () => {
     try {
       setError("");
@@ -142,18 +150,23 @@ export default function RoutesScreen({
       setLoading(false);
     }
   }, [api, user?.id_asesor]);
+
   useEffect(() => {
     load();
   }, [load]);
+
   useEffect(() => {
     if (refreshRevision > 0 && !selectedRef.current) load();
   }, [refreshRevision, load]);
+
   useEffect(() => {
     routeRef.current = route;
   }, [route]);
+
   useEffect(() => {
     selectedRef.current = selected;
   }, [selected]);
+
   const resetForm = () => {
     setSelected(null);
     setResult("GESTIONADO");
@@ -167,6 +180,7 @@ export default function RoutesScreen({
     setSignature("");
     setSignatureKey((key) => key + 1);
   };
+
   const closeForm = () => {
     const clientId = Number(selected?.cliente?.id_cliente);
     if (clientId) {
@@ -175,6 +189,7 @@ export default function RoutesScreen({
     suppressAutoRestoreRef.current = true;
     setSelected(null);
   };
+
   const openForm = (item: any) => {
     const clientId = Number(item?.cliente?.id_cliente);
     const draft = draftsRef.current.get(clientId);
@@ -189,6 +204,7 @@ export default function RoutesScreen({
     setPhotoProcessing(false);
     setSignature("");
     setSignatureKey((key) => key + 1);
+    
     persistDraft(clientId, {
       result: draft?.result || "GESTIONADO",
       notes: draft?.notes || "",
@@ -200,6 +216,7 @@ export default function RoutesScreen({
       formOpen: true,
     }).catch(() => {});
   };
+
   useEffect(() => {
     if (!route || selected) return;
     if (suppressAutoRestoreRef.current) {
@@ -211,27 +228,34 @@ export default function RoutesScreen({
       const draft = JSON.parse(stored);
       const requestedClientId = pendingRestoreClientRef.current || Number(draft?.clientId);
       if (!requestedClientId || !draft.formOpen || Number(draft.routeId) !== Number(route.id_ruta)) return;
+      
       const item = route.rutas_clientes?.find((entry: any) => Number(entry.cliente?.id_cliente) === Number(draft.clientId) && entry.estado_visita === "PENDIENTE");
       if (!item) return;
+      
       pendingRestoreClientRef.current = null;
       draftsRef.current.set(Number(draft.clientId), draft);
       openForm(item);
     }).catch(() => {});
   }, [route, selected]);
+
   const processCapturedPhoto = async (capturedUri: string, clientId: number, slot: 1 | 2) => {
     setPhotoProcessing(true);
     const compressed = await manipulateAsync(capturedUri, [{ resize: { width: 1024 } }], { compress: 0.65, format: SaveFormat.JPEG });
     if (!compressed.uri) throw new Error("No se pudo procesar la fotografía.");
+    
     const directory = `${FileSystem.documentDirectory}evidence-drafts`;
     await FileSystem.makeDirectoryAsync(directory, { intermediates: true });
+    
     let existing = draftsRef.current.get(clientId) || {};
     if (!Object.keys(existing).length) {
       const stored = await SecureStore.getItemAsync(FIELD_DRAFT_KEY);
       if (stored) existing = JSON.parse(stored);
     }
+    
     const previousUri = slot === 1 ? existing.photo : existing.photo2;
     const persistentUri = `${directory}/cliente-${clientId}-foto-${slot}-${Date.now()}.jpg`;
     await FileSystem.copyAsync({ from: compressed.uri, to: persistentUri });
+    
     if (slot === 1) {
       setPhoto(persistentUri);
       setPhotoPreview(persistentUri);
@@ -239,12 +263,14 @@ export default function RoutesScreen({
       setPhoto2(persistentUri);
       setPhoto2Preview(persistentUri);
     }
+    
     await persistDraft(clientId, {
       ...existing,
       ...(slot === 1 ? { photo: persistentUri, photoPreview: persistentUri } : { photo2: persistentUri, photo2Preview: persistentUri }),
       pendingPhotoSlot: null,
       formOpen: true,
     });
+    
     if (
       previousUri &&
       previousUri !== persistentUri &&
@@ -252,8 +278,10 @@ export default function RoutesScreen({
     ) {
       await FileSystem.deleteAsync(previousUri, { idempotent: true }).catch(() => {});
     }
+    
     pendingRestoreClientRef.current = clientId;
     const currentRoute = routeRef.current;
+    
     if (!selectedRef.current && currentRoute) {
       const item = currentRoute.rutas_clientes?.find(
         (entry: any) =>
@@ -267,11 +295,13 @@ export default function RoutesScreen({
     } else {
       pendingRestoreClientRef.current = null;
     }
+    
     setTimeout(() => {
       formScrollRef.current?.scrollTo({ y: slot === 1 ? 500 : 700, animated: false });
     }, 250);
   };
-const status = async (next: string) => {
+
+  const status = async (next: string) => {
     try {
       setSaving(true);
       await api(`/api/campo/rutas/${route.id_ruta}/estado`, {
@@ -292,6 +322,7 @@ const status = async (next: string) => {
       setSaving(false);
     }
   };
+
   const takePhoto = async (slot: 1 | 2) => {
     try {
       const permission = cameraPermission?.granted
@@ -323,6 +354,7 @@ const status = async (next: string) => {
       Alert.alert("Fotografía no disponible", e.message);
     }
   };
+
   const capturePhoto = async () => {
     if (!cameraSlot || capturing || !cameraRef.current) return;
     const slot = cameraSlot;
@@ -344,6 +376,7 @@ const status = async (next: string) => {
       setPhotoProcessing(false);
     }
   };
+
   const save = async () => {
     try {
       if (!photo) throw new Error("Toma una fotografía de evidencia.");
@@ -351,15 +384,47 @@ const status = async (next: string) => {
       if (!signature) throw new Error("Solicita la firma antes de guardar.");
       if (notes.trim().length < 5)
         throw new Error("Ingresa una descripción de al menos 5 caracteres.");
+      
       setSaving(true);
+      
       const permission = await Location.requestForegroundPermissionsAsync();
       if (permission.status !== "granted")
         throw new Error("Debes permitir la ubicación para validar la visita.");
+        
       const position = await Location.getCurrentPositionAsync({
         accuracy: Location.Accuracy.High,
       });
+
+      // 1. SVA: BLOQUEO DE FAKE GPS (Ubicaciones simuladas)
+      if (position.mocked) {
+        throw new Error("Ubicación falsa detectada (Fake GPS). Desactiva las ubicaciones de prueba en tu celular para enviar una evidencia genuina.");
+      }
+
       const clientId = Number(selected.cliente.id_cliente);
+      const clientLat = Number(selected.cliente.latitud);
+      const clientLng = Number(selected.cliente.longitud);
+
+      // 2. SVA: GEOCERCA ESTRICTA (Haversine 200 metros)
+      if (clientLat && clientLng) {
+        const R = 6371e3; // Radio de la Tierra en metros
+        const lat1 = position.coords.latitude * (Math.PI / 180);
+        const lat2 = clientLat * (Math.PI / 180);
+        const deltaLat = (clientLat - position.coords.latitude) * (Math.PI / 180);
+        const deltaLng = (clientLng - position.coords.longitude) * (Math.PI / 180);
+
+        const a = Math.sin(deltaLat / 2) * Math.sin(deltaLat / 2) +
+                  Math.cos(lat1) * Math.cos(lat2) *
+                  Math.sin(deltaLng / 2) * Math.sin(deltaLng / 2);
+        const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+        const distanceInMeters = R * c;
+
+        if (distanceInMeters > 200) {
+          throw new Error(`Estás a ${Math.round(distanceInMeters)}m del cliente. Acércate a la dirección exacta (radio de 200m) para registrar la gestión.`);
+        }
+      }
+
       const queueId = createOfflineVisitId(Number(route.id_ruta), clientId);
+      
       await enqueueVisit({
         id: queueId,
         advisorId: Number(user?.id_asesor),
@@ -374,8 +439,10 @@ const status = async (next: string) => {
         latitude: position.coords.latitude,
         longitude: position.coords.longitude,
       });
+      
       draftsRef.current.delete(clientId);
       await SecureStore.deleteItemAsync(FIELD_DRAFT_KEY);
+      
       const queuedRoute = {
         ...route,
         rutas_clientes: route.rutas_clientes.map((item: any) =>
@@ -384,9 +451,11 @@ const status = async (next: string) => {
             : item,
         ),
       };
+      
       setRoute(queuedRoute);
       await cacheTodayRoute(queuedRoute, user?.id_asesor);
       resetForm();
+      
       let sync = { syncedIds: [] as string[] };
       try {
         const network = await NetInfo.fetch();
@@ -397,6 +466,7 @@ const status = async (next: string) => {
       } catch {
         // La gestión ya está confirmada en SQLite y conserva sus evidencias.
       }
+      
       if (sync.syncedIds.includes(queueId)) {
         await load();
         Alert.alert(
@@ -415,7 +485,15 @@ const status = async (next: string) => {
       setSaving(false);
     }
   };
+
+  // Cálculos para el Dashboard de KPIs
+  const totalVisits = route?.rutas_clientes?.length || 0;
+  const pendingVisits = route?.rutas_clientes?.filter((c: any) => c.estado_visita === "PENDIENTE").length || 0;
+  const completedVisits = totalVisits - pendingVisits;
+  const progressPercent = totalVisits > 0 ? Math.round((completedVisits / totalVisits) * 100) : 0;
+
   if (loading) return <Loading />;
+  
   return (
     <>
       <Screen
@@ -469,37 +547,61 @@ const status = async (next: string) => {
                 </View>
                 <Badge status={route.estado} />
               </View>
-                  {route.estado === "PROGRAMADA" ? (
-                <Button
-                  title="Iniciar jornada"
-                  icon="play"
-                  disabled={saving}
-                  onPress={() => status("EN_PROCESO")}
-                />
-              ) : route.estado === "EN_PROCESO" ? (() => {
-                const pendingCount = route.rutas_clientes?.filter(
-                  (item: any) => item.estado_visita === "PENDIENTE"
-                ).length || 0;
 
-                return (
+              {/* SVA: MINI DASHBOARD KPI DE DESEMPEÑO */}
+              <View style={s.kpiContainer}>
+                <View style={s.kpiBlock}>
+                  <Text style={s.kpiValue}>{progressPercent}%</Text>
+                  <Text style={s.kpiLabel}>Avance</Text>
+                </View>
+                <View style={s.kpiDivider} />
+                <View style={s.kpiBlock}>
+                  <Text style={s.kpiValue}>{completedVisits}</Text>
+                  <Text style={s.kpiLabel}>Atendidos</Text>
+                </View>
+                <View style={s.kpiDivider} />
+                <View style={s.kpiBlock}>
+                  <Text style={[s.kpiValue, pendingVisits === 0 ? { color: C.success } : { color: C.warning }]}>
+                    {pendingVisits}
+                  </Text>
+                  <Text style={s.kpiLabel}>Pendientes</Text>
+                </View>
+              </View>
+
+              <View style={{ marginTop: 15 }}>
+                {route.estado === "PROGRAMADA" ? (
                   <Button
-                    title={pendingCount > 0 ? `Finalizar jornada (${pendingCount} pendientes)` : "Finalizar jornada"}
-                    icon="flag-checkered"
+                    title="Iniciar jornada"
+                    icon="play"
                     disabled={saving}
-                    onPress={() => {
-                      if (pendingCount > 0) {
-                        Alert.alert(
-                          "Ruta incompleta",
-                          `Aún tienes ${pendingCount} cliente(s) sin registrar resultado. Debes registrar el resultado de todos los clientes antes de finalizar.`
-                        );
-                        return;
-                      }
-                      status("FINALIZADA");
-                    }}
+                    onPress={() => status("EN_PROCESO")}
                   />
-                );
-              })() : null}  
+                ) : route.estado === "EN_PROCESO" ? (() => {
+                  const pendingCount = route.rutas_clientes?.filter(
+                    (item: any) => item.estado_visita === "PENDIENTE"
+                  ).length || 0;
+
+                  return (
+                    <Button
+                      title={pendingCount > 0 ? `Finalizar jornada (${pendingCount} pendientes)` : "Finalizar jornada"}
+                      icon="flag-checkered"
+                      disabled={saving}
+                      onPress={() => {
+                        if (pendingCount > 0) {
+                          Alert.alert(
+                            "Ruta incompleta",
+                            `Aún tienes ${pendingCount} cliente(s) sin registrar resultado. Debes registrar el resultado de todos los clientes antes de finalizar.`
+                          );
+                          return;
+                        }
+                        status("FINALIZADA");
+                      }}
+                    />
+                  );
+                })() : null}
+              </View>  
             </Card>
+
             <Text style={s.section}>ORDEN DE VISITAS</Text>
             {route.rutas_clientes.map((item: any) => (
               <Pressable
@@ -528,6 +630,15 @@ const status = async (next: string) => {
                         DNI {item.cliente.numero_documento} ·{" "}
                         {item.cliente.distrito || "Sin distrito"}
                       </Text>
+                      
+                      <Pressable onPress={() => {
+                        if (item.cliente.telefono) Linking.openURL(`tel:${item.cliente.telefono}`);
+                      }}>
+                        <Text style={[s.clientMeta, { color: C.primary, fontWeight: "700" }]}>
+                          <MaterialCommunityIcons name="phone" size={11} /> {item.cliente.telefono || "Sin teléfono registrado"}
+                        </Text>
+                      </Pressable>
+
                       <Text numberOfLines={2} style={s.address}>
                         {item.cliente.direccion || "Dirección no registrada"}
                       </Text>
@@ -539,6 +650,23 @@ const status = async (next: string) => {
                             Number(item.cliente.otras_deudas || 0),
                         )}
                       </Text>
+
+                      {/* SVA: BOTÓN DE NAVEGACIÓN NATIVA */}
+                      {item.cliente.latitud && item.cliente.longitud && item.estado_visita === "PENDIENTE" ? (
+                        <Pressable 
+                          style={s.navButton}
+                          onPress={(e) => {
+                            const url = `https://www.google.com/maps/dir/?api=1&destination=${item.cliente.latitud},${item.cliente.longitud}`;
+                            Linking.openURL(url).catch(() => {
+                              Alert.alert("Error", "No se pudo abrir la aplicación de mapas.");
+                            });
+                          }}
+                        >
+                          <MaterialCommunityIcons name="directions" size={14} color="#fff" />
+                          <Text style={s.navButtonText}>Cómo llegar</Text>
+                        </Pressable>
+                      ) : null}
+
                     </View>
                     <View style={s.clientRight}>
                       <Badge status={item.estado_visita} />
@@ -754,12 +882,45 @@ const status = async (next: string) => {
     </>
   );
 }
+
 const s = StyleSheet.create({
   routeHead: {
     flexDirection: "row",
     alignItems: "center",
     gap: 11,
-    marginBottom: 15,
+  },
+  kpiContainer: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    backgroundColor: C.surface2,
+    borderRadius: 14,
+    paddingVertical: 14,
+    marginTop: 15,
+    borderWidth: 1,
+    borderColor: C.border,
+  },
+  kpiBlock: {
+    flex: 1,
+    alignItems: "center",
+  },
+  kpiDivider: {
+    width: 1,
+    height: 30,
+    backgroundColor: C.border,
+  },
+  kpiValue: {
+    fontSize: 18,
+    fontWeight: "900",
+    color: C.text,
+  },
+  kpiLabel: {
+    fontSize: 9,
+    fontWeight: "800",
+    color: C.muted,
+    marginTop: 4,
+    letterSpacing: 0.5,
+    textTransform: "uppercase",
   },
   offlineCard: {
     flexDirection: "row",
@@ -805,6 +966,23 @@ const s = StyleSheet.create({
   clientMeta: { fontSize: 10, color: C.muted, marginTop: 3 },
   address: { fontSize: 11, lineHeight: 16, color: C.text, marginTop: 7 },
   debt: { fontSize: 11, fontWeight: "900", color: C.red, marginTop: 7 },
+  navButton: {
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: C.primary,
+    alignSelf: "flex-start",
+    paddingHorizontal: 12,
+    paddingVertical: 7,
+    borderRadius: 8,
+    gap: 5,
+    marginTop: 10,
+  },
+  navButtonText: {
+    color: "#fff",
+    fontSize: 10,
+    fontWeight: "800",
+    letterSpacing: 0.5,
+  },
   clientRight: { alignItems: "flex-end", justifyContent: "space-between" },
   done: { opacity: 0.7 },
   overlay: {
