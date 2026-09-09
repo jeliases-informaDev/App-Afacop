@@ -1,14 +1,26 @@
 {
-  "cli": { "version": ">= 16.0.0" },
+  "cli": {
+    "version": ">= 16.0.0"
+  },
   "build": {
     "preview": {
       "distribution": "internal",
-      "env": { "EXPO_PUBLIC_API_URL": "https://afacop-backend.onrender.com" },
-      "android": { "buildType": "apk" }
+      "env": {
+        "EXPO_PUBLIC_API_URL": "https://afacop-backend.onrender.com"
+      },
+      "android": {
+        "buildType": "apk"
+      },
+      "channel": "preview"
     },
     "production": {
-      "env": { "EXPO_PUBLIC_API_URL": "https://afacop-backend.onrender.com" },
-      "android": { "buildType": "app-bundle" }
+      "env": {
+        "EXPO_PUBLIC_API_URL": "https://afacop-backend.onrender.com"
+      },
+      "android": {
+        "buildType": "app-bundle"
+      },
+      "channel": "production"
     }
   }
 }

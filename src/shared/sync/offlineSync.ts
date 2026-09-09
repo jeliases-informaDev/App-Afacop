@@ -4,6 +4,7 @@ import * as FileSystem from "expo-file-system/legacy";
 import * as SecureStore from "expo-secure-store";
 import * as SQLite from "expo-sqlite";
 import * as TaskManager from "expo-task-manager";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 import { API_URL } from "../api/api";
 
 export const OFFLINE_SYNC_TASK = "radar360-offline-visit-sync";
@@ -11,6 +12,7 @@ const TOKEN_KEY = "radar_token";
 const ADVISOR_KEY = "radar_advisor_id";
 const DATABASE_NAME = "radar360-offline.db";
 const REQUEST_TIMEOUT_MS = 25_000;
+const CACHE_PREFIX = "radar360_cache_";
 
 export type QueuedVisitInput = {
   id: string;
@@ -271,7 +273,6 @@ async function synchronize(tokenOverride?: string | null): Promise<SyncResult> {
         item.id,
       );
       if (error?.status === 401 || error?.status === 403) break;
-      // Se conserva el orden: una gestión posterior no debe adelantarse a otra.
       break;
     }
   }
@@ -307,8 +308,6 @@ export async function enqueueVisit(input: QueuedVisitInput) {
     now,
     now,
   );
-  // La gestión ya quedó guardada. Una restricción del fabricante para tareas
-  // en segundo plano nunca debe convertir el guardado local en un error.
   await registerOfflineSyncTask().catch(() => false);
   return input.id;
 }
@@ -370,6 +369,36 @@ export async function getCachedTodayRoute<T = any>(advisorId?: number | null): P
   } catch {
     return null;
   }
+}
+
+// NUEVAS FUNCIONES DE CAPA DE CACHÉ RÁPIDA (Stale-While-Revalidate)
+export async function getCachedData(key: string) {
+  try {
+    const cached = await AsyncStorage.getItem(CACHE_PREFIX + key);
+    return cached ? JSON.parse(cached) : null;
+  } catch {
+    return null;
+  }
+}
+
+export async function setCachedData(key: string, data: any) {
+  try {
+    await AsyncStorage.setItem(CACHE_PREFIX + key, JSON.stringify(data));
+  } catch {}
+}
+
+export async function backgroundSync(apiFunction: () => Promise<any>, cacheKey: string) {
+  const cached = await getCachedData(cacheKey);
+  
+  apiFunction()
+    .then(async (freshData) => {
+      if (freshData) {
+        await setCachedData(cacheKey, freshData);
+      }
+    })
+    .catch(() => {});
+
+  return cached;
 }
 
 export async function registerOfflineSyncTask() {
