@@ -18,15 +18,17 @@
       "supportsTablet": true
     },
     "android": {
-      "package": "pe.informaperu.radar360",
-      "versionCode": 6,
-      "softwareKeyboardLayoutMode": "resize",
-      "permissions": [
-        "android.permission.ACCESS_COARSE_LOCATION",
-        "android.permission.ACCESS_FINE_LOCATION",
-        "android.permission.CAMERA",
-        "android.permission.INTERNET",
-        "android.permission.RECORD_AUDIO"
+        "package": "pe.informaperu.radar360",
+          "versionCode": 6,
+          "minSdkVersion": 24, 
+          "targetSdkVersion": 34,
+          "softwareKeyboardLayoutMode": "resize",
+          "permissions": [
+            "android.permission.ACCESS_COARSE_LOCATION",
+            "android.permission.ACCESS_FINE_LOCATION",
+            "android.permission.CAMERA",
+            "android.permission.INTERNET",
+            "android.permission.RECORD_AUDIO" 
       ],
       "adaptiveIcon": {
         "backgroundColor": "#FFFFFF",
@@ -61,6 +63,12 @@
       "expo-font",
       "expo-sqlite",
       "expo-background-task"
-    ]
+    ],
+    "extra": {
+      "eas": {
+        "projectId": "1fc35bfa-b454-4c15-9e3a-f494f6263b25"
+      }
+    },
+    "owner": "jeliasesinformaperu"
   }
 }
