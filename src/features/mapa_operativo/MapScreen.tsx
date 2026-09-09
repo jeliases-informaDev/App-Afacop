@@ -45,6 +45,20 @@ const colors: Record<string, string> = {
   ASESOR: "#0B22A1",
 };
 
+// Fórmula Matemática para calcular distancia en km entre dos coordenadas (Haversine)
+function getDistanceKm(lat1: number, lon1: number, lat2: number, lon2: number) {
+  const R = 6371;
+  const dLat = (lat2 - lat1) * (Math.PI / 180);
+  const dLon = (lon2 - lon1) * (Math.PI / 180);
+  const a =
+    Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+    Math.cos(lat1 * (Math.PI / 180)) *
+      Math.cos(lat2 * (Math.PI / 180)) *
+      Math.sin(dLon / 2) *
+      Math.sin(dLon / 2);
+  return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+}
+
 function normalizePoint(item: any) {
   const client = item?.cliente || item;
   return {
@@ -61,42 +75,71 @@ function normalizePoint(item: any) {
 
 function mapHtml(points: any[]) {
   const safePoints = JSON.stringify(
-    points.map((point) => ({
-      id: point.id,
-      lat: Number(point.latitud),
-      lng: Number(point.longitud),
-      name:
-        [point.nombres, point.apellido_paterno, point.apellido_materno]
-          .filter(Boolean)
-          .join(" ") || "Cliente sin nombre",
-      dni: point.numero_documento || "",
-      district: point.distrito || "Sin distrito",
-      address: point.direccion || "Dirección no registrada",
-      phone: point.telefono || "No registrado",
-      debt:
-        Number(point.deuda_vigente || 0) +
-        Number(point.deuda_castigada || 0) +
-        Number(point.otras_deudas || 0),
-      advisor: point.estado === "ASESOR",
-      label: labels[point.estado] || point.estado,
-      color: colors[point.estado] || "#334155",
-    })),
+    points.map((point) => {
+      // Unificación rica de la dirección
+      const via = point.tipo_via ? `${point.tipo_via} ${point.nombre_via || ''}`.trim() : point.direccion;
+      const partesDireccion = [
+        via,
+        point.nomenclatura,
+        point.urbanizacion ? `Urb. ${point.urbanizacion}` : '',
+        point.distrito,
+        point.provincia
+      ].filter(Boolean);
+
+      return {
+        id: point.id,
+        lat: Number(point.latitud),
+        lng: Number(point.longitud),
+        orden: point.orden_ruta || "",
+        name:
+          [point.nombres, point.apellido_paterno, point.apellido_materno]
+            .filter(Boolean)
+            .join(" ") || "Cliente sin nombre",
+        dni: point.numero_documento || "",
+        address: partesDireccion.length > 0 ? partesDireccion.join(" · ") : "Dirección no registrada",
+        phone: point.telefono || "No registrado",
+        debt:
+          Number(point.deuda_vigente || 0) +
+          Number(point.deuda_castigada || 0) +
+          Number(point.otras_deudas || 0),
+        advisor: point.estado === "ASESOR",
+        label: labels[point.estado] || point.estado,
+        color: colors[point.estado] || "#334155",
+      };
+    })
   ).replace(/</g, "\\u003c");
 
   return `<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no"><link rel="preconnect" href="https://tile.openstreetmap.org" crossorigin><style>
 html,body,#map{width:100%;height:100%;margin:0;overflow:hidden;background:#eaf1f8;font-family:Arial,sans-serif;touch-action:none;user-select:none;-webkit-user-select:none;-webkit-touch-callout:none}
-#tiles,#marks{position:absolute;inset:0}.tile{position:absolute;width:256px;height:256px;background:#dbe7f3;will-change:transform}.mark{position:absolute;width:48px;height:58px;border:0;background:transparent;transform:translate(-24px,-49px);padding:10px 11px;z-index:5}.pin{display:block;width:24px;height:24px;border:2px solid #fff;border-radius:50% 50% 50% 0;transform:rotate(-45deg);box-shadow:0 2px 6px #071b435c}.pin:after{content:'';display:block;width:6px;height:6px;border-radius:50%;background:#fff;margin:7px}.advisor-pin{position:relative;display:flex;width:38px;height:38px;margin:-7px;align-items:center;justify-content:center;border:3px solid #fff;border-radius:50%;background:linear-gradient(145deg,#0B22A1,#2563EB);color:#fff;box-shadow:0 4px 12px #071b4375}.advisor-pin:before{content:'';position:absolute;inset:-7px;border:2px solid #38BDF8;border-radius:50%;opacity:.75;animation:advisorPulse 1.8s ease-out infinite}.advisor-pin svg{position:relative;width:21px;height:21px;fill:#fff}@keyframes advisorPulse{0%{transform:scale(.8);opacity:.85}75%,100%{transform:scale(1.35);opacity:0}}.controls{position:absolute;right:12px;top:12px;display:grid;gap:3px;z-index:20}.controls button{width:44px;height:44px;border:1px solid #dbe2ea;background:#fff;color:#071b43;font-size:24px;font-weight:bold;border-radius:10px;box-shadow:0 4px 14px #071b4320}.attr{position:absolute;right:3px;bottom:2px;padding:2px 4px;background:#ffffffdd;color:#475569;font-size:8px;z-index:10}.info{display:none;position:absolute;left:12px;right:12px;bottom:18px;padding:14px 42px 14px 14px;background:#fff;border:1px solid #dbe4ee;border-radius:16px;box-shadow:0 8px 30px #071b4340;z-index:30}.info b{display:block;color:#172033;font-size:14px;line-height:18px;margin-bottom:5px}.meta{color:#64748b;font-size:11px;line-height:16px}.debt{margin-top:7px;color:#071b43;font-size:12px;font-weight:800}.tag{display:inline-block;margin-top:8px;padding:4px 8px;border-radius:999px;color:#fff;font-size:10px;font-weight:800}.close{position:absolute;right:8px;top:8px;width:30px;height:30px;border:0;border-radius:10px;background:#f1f5f9;color:#475569;font-size:20px}.loading{position:absolute;left:12px;top:12px;background:#ffffffee;border-radius:12px;padding:8px 10px;color:#475569;font-size:11px;font-weight:700;z-index:9}
-</style></head><body><div id="map"><div id="tiles"></div><div id="marks"></div><div class="controls"><button id="zin">+</button><button id="zout">−</button></div><div id="loading" class="loading">Cargando mapa...</div><div id="info" class="info"></div><div class="attr">© OpenStreetMap</div></div><script>
-let points=${safePoints};const tileHost='https://tile.openstreetmap.org';const tileSize=256;let zoom=points.length?14:11;let center=points.length?fitCenter(points):{lat:-12.0464,lng:-77.0428};let dragging=false,last=null,pinchStart=null,shiftX=0,shiftY=0,zoomTimer=0,tapMark=null,tapStart=null;const tiles=document.getElementById('tiles'),marks=document.getElementById('marks'),info=document.getElementById('info'),loading=document.getElementById('loading');
+#tiles,#lines,#marks{position:absolute;inset:0;will-change:transform}.tile{position:absolute;width:256px;height:256px;background:#dbe7f3;will-change:transform}
+#lines{pointer-events:none;z-index:4}
+.mark{position:absolute;width:48px;height:58px;border:0;background:transparent;transform:translate(-24px,-49px);padding:10px 11px;z-index:5}.pin{position:relative;display:block;width:24px;height:24px;border:2px solid #fff;border-radius:50% 50% 50% 0;transform:rotate(-45deg);box-shadow:0 2px 6px #071b435c}.pin:after{content:'';display:block;width:6px;height:6px;border-radius:50%;background:#fff;margin:7px}.pin .order{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%) rotate(45deg);color:#fff;font-size:10px;font-weight:900;z-index:2;line-height:1}
+.advisor-pin{position:relative;display:flex;width:38px;height:38px;margin:-7px;align-items:center;justify-content:center;border:3px solid #fff;border-radius:50%;background:linear-gradient(145deg,#0B22A1,#2563EB);color:#fff;box-shadow:0 4px 12px #071b4375}.advisor-pin:before{content:'';position:absolute;inset:-7px;border:2px solid #38BDF8;border-radius:50%;opacity:.75;animation:advisorPulse 1.8s ease-out infinite}.advisor-pin svg{position:relative;width:21px;height:21px;fill:#fff}@keyframes advisorPulse{0%{transform:scale(.8);opacity:.85}75%,100%{transform:scale(1.35);opacity:0}}.controls{position:absolute;right:12px;top:12px;display:grid;gap:3px;z-index:20}.controls button{width:44px;height:44px;border:1px solid #dbe2ea;background:#fff;color:#071b43;font-size:24px;font-weight:bold;border-radius:10px;box-shadow:0 4px 14px #071b4320}.attr{position:absolute;right:3px;bottom:2px;padding:2px 4px;background:#ffffffdd;color:#475569;font-size:8px;z-index:10}.info{display:none;position:absolute;left:12px;right:12px;bottom:18px;padding:14px 42px 14px 14px;background:#fff;border:1px solid #dbe4ee;border-radius:16px;box-shadow:0 8px 30px #071b4340;z-index:30}.info b{display:block;color:#172033;font-size:14px;line-height:18px;margin-bottom:5px}.meta{color:#64748b;font-size:11px;line-height:16px}.debt{margin-top:7px;color:#071b43;font-size:12px;font-weight:800}.tag{display:inline-block;margin-top:8px;padding:4px 8px;border-radius:999px;color:#fff;font-size:10px;font-weight:800}.close{position:absolute;right:8px;top:8px;width:30px;height:30px;border:0;border-radius:10px;background:#f1f5f9;color:#475569;font-size:20px}.loading{position:absolute;left:12px;top:12px;background:#ffffffee;border-radius:12px;padding:8px 10px;color:#475569;font-size:11px;font-weight:700;z-index:9}
+</style></head><body><div id="map"><div id="tiles"></div><svg id="lines"></svg><div id="marks"></div><div class="controls"><button id="zin">+</button><button id="zout">−</button></div><div id="loading" class="loading">Cargando ruta...</div><div id="info" class="info"></div><div class="attr">© OpenStreetMap</div></div><script>
+let points=${safePoints};const tileHost='https://tile.openstreetmap.org';const tileSize=256;let zoom=points.length?14:11;let center=points.length?fitCenter(points):{lat:-12.0464,lng:-77.0428};let dragging=false,last=null,pinchStart=null,shiftX=0,shiftY=0,zoomTimer=0,tapMark=null,tapStart=null;const tiles=document.getElementById('tiles'),lines=document.getElementById('lines'),marks=document.getElementById('marks'),info=document.getElementById('info'),loading=document.getElementById('loading');
 function clamp(v,min,max){return Math.max(min,Math.min(max,v))}function scale(z){return tileSize*Math.pow(2,z)}function project(lat,lng,z=zoom){const s=scale(z),sin=Math.sin(lat*Math.PI/180),x=(lng+180)/360*s,y=(0.5-Math.log((1+sin)/(1-sin))/(4*Math.PI))*s;return{x,y}}function unproject(x,y,z=zoom){const s=scale(z),lng=x/s*360-180,n=Math.PI-2*Math.PI*y/s,lat=180/Math.PI*Math.atan(0.5*(Math.exp(n)-Math.exp(-n)));return{lat,lng}}function fitCenter(list){const lat=list.reduce((a,p)=>a+p.lat,0)/list.length,lng=list.reduce((a,p)=>a+p.lng,0)/list.length;return{lat,lng}}function viewport(){return{w:window.innerWidth,h:window.innerHeight}}function centerPx(){return project(center.lat,center.lng)}function screenFromLatLng(lat,lng){const p=project(lat,lng),c=centerPx(),v=viewport();return{x:p.x-c.x+v.w/2,y:p.y-c.y+v.h/2}}function setCenterFromScreenDelta(dx,dy){const c=centerPx();center=unproject(c.x-dx,c.y-dy)}
-function resetLayers(){tiles.style.transition='none';marks.style.transition='none';tiles.style.transform='';marks.style.transform='';shiftX=0;shiftY=0}function draw(){resetLayers();drawTiles();drawMarks();loading.style.display='none'}function drawTiles(){const v=viewport(),tileZoom=Math.ceil(zoom),factor=Math.pow(2,zoom-tileZoom),c=project(center.lat,center.lng,tileZoom),logicalW=v.w/factor,logicalH=v.h/factor,startX=c.x-logicalW/2,startY=c.y-logicalH/2,minX=Math.floor(startX/tileSize)-1,maxX=Math.floor((startX+logicalW)/tileSize)+1,minY=Math.floor(startY/tileSize)-1,maxY=Math.floor((startY+logicalH)/tileSize)+1,maxTile=Math.pow(2,tileZoom);let html='';for(let x=minX;x<=maxX;x++){for(let y=minY;y<=maxY;y++){if(y<0||y>=maxTile)continue;const tx=((x%maxTile)+maxTile)%maxTile,left=(x*tileSize-startX)*factor,top=(y*tileSize-startY)*factor,size=tileSize*factor;html+=\`<img class="tile" src="\${tileHost}/\${tileZoom}/\${tx}/\${y}.png" style="width:\${size}px;height:\${size}px;transform:translate3d(\${left}px,\${top}px,0)" draggable="false">\`;}}tiles.innerHTML=html}function drawMarks(){marks.innerHTML=points.map((p,i)=>{const s=screenFromLatLng(p.lat,p.lng),marker=p.advisor?\`<span class="advisor-pin"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 12a4 4 0 1 0 0-8 4 4 0 0 0 0 8Zm0 2c-4.42 0-8 2.24-8 5v1h16v-1c0-2.76-3.58-5-8-5Z"/></svg></span>\`:\`<span class="pin" style="background:\${p.color}"></span>\`;return \`<button class="mark" data-i="\${i}" aria-label="\${p.advisor?'Ubicación del asesor':'Ubicación de '+p.name}" style="left:\${s.x}px;top:\${s.y}px">\${marker}</button>\`;}).join('')}function animateLayersTo(value,origin,done){tiles.style.transformOrigin=origin;marks.style.transformOrigin=origin;tiles.style.transition='transform 150ms cubic-bezier(.22,.72,.18,1)';marks.style.transition='transform 150ms cubic-bezier(.22,.72,.18,1)';requestAnimationFrame(()=>{tiles.style.transform='scale('+value+')';marks.style.transform='scale('+value+')'});clearTimeout(zoomTimer);zoomTimer=setTimeout(done,155)}function setZoom(next,cx=innerWidth/2,cy=innerHeight/2,animate=true){next=clamp(next,3,19);if(Math.abs(next-zoom)<.0001){if(animate)animateLayersTo(1,cx+'px '+cy+'px',draw);else draw();return}const previous=zoom,before=centerPx(),worldBefore={x:before.x+(cx-innerWidth/2),y:before.y+(cy-innerHeight/2)},geo=unproject(worldBefore.x,worldBefore.y,zoom);zoom=next;const p=project(geo.lat,geo.lng,zoom),newCenter={x:p.x-(cx-innerWidth/2),y:p.y-(cy-innerHeight/2)};center=unproject(newCenter.x,newCenter.y,zoom);if(!animate){draw();return}animateLayersTo(Math.pow(2,zoom-previous),cx+'px '+cy+'px',draw)}function previewPinch(totalRatio,m){if(!pinchStart)return;const value=clamp(totalRatio,.35,3),origin=m.x+'px '+m.y+'px';tiles.style.transition='none';marks.style.transition='none';tiles.style.transformOrigin=origin;marks.style.transformOrigin=origin;tiles.style.transform='scale('+value+')';marks.style.transform='scale('+value+')';pinchStart.ratio=value;pinchStart.m=m}function commitPinch(){if(!pinchStart)return;const state=pinchStart,next=clamp(state.z+Math.log2(state.ratio||1),3,19);pinchStart=null;setZoom(next,state.m.x,state.m.y,false)}function pan(dx,dy){setCenterFromScreenDelta(dx,dy);shiftX+=dx;shiftY+=dy;tiles.style.transform='translate3d('+shiftX+'px,'+shiftY+'px,0)';marks.style.transform='translate3d('+shiftX+'px,'+shiftY+'px,0)'}function endPan(){if(!dragging)return;dragging=false;last=null;draw()}function distance(t){const dx=t[0].clientX-t[1].clientX,dy=t[0].clientY-t[1].clientY;return Math.sqrt(dx*dx+dy*dy)}function midpoint(t){return{x:(t[0].clientX+t[1].clientX)/2,y:(t[0].clientY+t[1].clientY)/2}}
-function h(v){return String(v??'').replace(/[&<>"']/g,ch=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]))}function hideInfo(){info.style.display='none'}function showInfo(index){const p=points[Number(index)];if(!p)return;const debt=Number(p.debt||0);info.innerHTML=\`<button class="close" aria-label="Cerrar">×</button><b>\${h(p.name)}</b><div class="meta">DNI \${h(p.numero_documento||'-')} · \${h(p.district)}<br>\${h(p.address)}<br>Teléfono: \${h(p.phone)}</div>\${debt>0?\`<div class="debt">Deuda total: S/ \${debt.toLocaleString('es-PE',{minimumFractionDigits:2,maximumFractionDigits:2})}</div>\`:''}<span class="tag" style="background:\${p.color}">\${h(p.label)}</span>\`;info.style.display='block';info.querySelector('.close').onclick=e=>{e.stopPropagation();hideInfo()}}info.addEventListener('touchstart',e=>{e.stopPropagation()},{passive:false});info.addEventListener('touchmove',e=>{e.stopPropagation()},{passive:false});info.addEventListener('touchend',e=>{const close=e.target.closest('.close');if(close){hideInfo();e.preventDefault()}e.stopPropagation()},{passive:false});info.addEventListener('touchcancel',e=>{e.stopPropagation()},{passive:false});
+function resetLayers(){tiles.style.transition='none';lines.style.transition='none';marks.style.transition='none';tiles.style.transform='';lines.style.transform='';marks.style.transform='';shiftX=0;shiftY=0}function draw(){resetLayers();drawTiles();drawRoute();drawMarks();loading.style.display='none'}
+function drawTiles(){const v=viewport(),tileZoom=Math.ceil(zoom),factor=Math.pow(2,zoom-tileZoom),c=project(center.lat,center.lng,tileZoom),logicalW=v.w/factor,logicalH=v.h/factor,startX=c.x-logicalW/2,startY=c.y-logicalH/2,minX=Math.floor(startX/tileSize)-1,maxX=Math.floor((startX+logicalW)/tileSize)+1,minY=Math.floor(startY/tileSize)-1,maxY=Math.floor((startY+logicalH)/tileSize)+1,maxTile=Math.pow(2,tileZoom);let html='';for(let x=minX;x<=maxX;x++){for(let y=minY;y<=maxY;y++){if(y<0||y>=maxTile)continue;const tx=((x%maxTile)+maxTile)%maxTile,left=(x*tileSize-startX)*factor,top=(y*tileSize-startY)*factor,size=tileSize*factor;html+=\`<img class="tile" src="\${tileHost}/\${tileZoom}/\${tx}/\${y}.png" style="width:\${size}px;height:\${size}px;transform:translate3d(\${left}px,\${top}px,0)" draggable="false">\`;}}tiles.innerHTML=html}
+function drawRoute(){const ordered = points.filter(p => p.orden !== '');const adv = points.find(p => p.advisor);ordered.sort((a,b)=>a.orden-b.orden);const pathPoints = [];if(adv) pathPoints.push(adv);pathPoints.push(...ordered);if(pathPoints.length<2){lines.innerHTML='';return;}let d='';pathPoints.forEach((p,i)=>{const s=screenFromLatLng(p.lat,p.lng);d+=(i===0?'M':'L')+s.x+','+s.y+' '});lines.innerHTML=\`<path d="\${d}" fill="none" stroke="#2563EB" stroke-width="3" stroke-dasharray="6,8" stroke-linecap="round" stroke-linejoin="round" opacity="0.65"/>\`;}
+function drawMarks(){marks.innerHTML=points.map((p,i)=>{const s=screenFromLatLng(p.lat,p.lng),hasOrder=p.orden!=='',marker=p.advisor?\`<span class="advisor-pin"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 12a4 4 0 1 0 0-8 4 4 0 0 0 0 8Zm0 2c-4.42 0-8 2.24-8 5v1h16v-1c0-2.76-3.58-5-8-5Z"/></svg></span>\`:\`<span class="pin" style="background:\${p.color}">\${hasOrder?\`<span class="order">\${p.orden}</span>\`:\`\`}</span>\`;return \`<button class="mark" data-i="\${i}" aria-label="\${p.advisor?'Ubicación del asesor':'Ubicación de '+p.name}" style="left:\${s.x}px;top:\${s.y}px">\${marker}</button>\`;}).join('')}
+function animateLayersTo(value,origin,done){tiles.style.transformOrigin=origin;lines.style.transformOrigin=origin;marks.style.transformOrigin=origin;tiles.style.transition='transform 150ms cubic-bezier(.22,.72,.18,1)';lines.style.transition='transform 150ms cubic-bezier(.22,.72,.18,1)';marks.style.transition='transform 150ms cubic-bezier(.22,.72,.18,1)';requestAnimationFrame(()=>{tiles.style.transform='scale('+value+')';lines.style.transform='scale('+value+')';marks.style.transform='scale('+value+')'});clearTimeout(zoomTimer);zoomTimer=setTimeout(done,155)}function setZoom(next,cx=innerWidth/2,cy=innerHeight/2,animate=true){next=clamp(next,3,19);if(Math.abs(next-zoom)<.0001){if(animate)animateLayersTo(1,cx+'px '+cy+'px',draw);else draw();return}const previous=zoom,before=centerPx(),worldBefore={x:before.x+(cx-innerWidth/2),y:before.y+(cy-innerHeight/2)},geo=unproject(worldBefore.x,worldBefore.y,zoom);zoom=next;const p=project(geo.lat,geo.lng,zoom),newCenter={x:p.x-(cx-innerWidth/2),y:p.y-(cy-innerHeight/2)};center=unproject(newCenter.x,newCenter.y,zoom);if(!animate){draw();return}animateLayersTo(Math.pow(2,zoom-previous),cx+'px '+cy+'px',draw)}function previewPinch(totalRatio,m){if(!pinchStart)return;const value=clamp(totalRatio,.35,3),origin=m.x+'px '+m.y+'px';tiles.style.transition='none';lines.style.transition='none';marks.style.transition='none';tiles.style.transformOrigin=origin;lines.style.transformOrigin=origin;marks.style.transformOrigin=origin;tiles.style.transform='scale('+value+')';lines.style.transform='scale('+value+')';marks.style.transform='scale('+value+')';pinchStart.ratio=value;pinchStart.m=m}function commitPinch(){if(!pinchStart)return;const state=pinchStart,next=clamp(state.z+Math.log2(state.ratio||1),3,19);pinchStart=null;setZoom(next,state.m.x,state.m.y,false)}function pan(dx,dy){setCenterFromScreenDelta(dx,dy);shiftX+=dx;shiftY+=dy;const t='translate3d('+shiftX+'px,'+shiftY+'px,0)';tiles.style.transform=t;lines.style.transform=t;marks.style.transform=t}function endPan(){if(!dragging)return;dragging=false;last=null;draw()}function distance(t){const dx=t[0].clientX-t[1].clientX,dy=t[0].clientY-t[1].clientY;return Math.sqrt(dx*dx+dy*dy)}function midpoint(t){return{x:(t[0].clientX+t[1].clientX)/2,y:(t[0].clientY+t[1].clientY)/2}}
+function h(v){return String(v??'').replace(/[&<>"']/g,ch=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]))}function hideInfo(){info.style.display='none'}function showInfo(index){const p=points[Number(index)];if(!p)return;const debt=Number(p.debt||0);info.innerHTML=\`<button class="close" aria-label="Cerrar">×</button><b>\${p.orden?'#'+p.orden+' - ':''}\${h(p.name)}</b><div class="meta">DNI \${h(p.dni||'-')}<br><span style="display:inline-block;margin-top:4px;color:#334155;">📍 \${h(p.address)}</span><br>Teléfono: \${h(p.phone)}</div>\${debt>0?\`<div class="debt">Deuda total: S/ \${debt.toLocaleString('es-PE',{minimumFractionDigits:2,maximumFractionDigits:2})}</div>\`:''}<span class="tag" style="background:\${p.color}">\${h(p.label)}</span>\`;info.style.display='block';info.querySelector('.close').onclick=e=>{e.stopPropagation();hideInfo()}}info.addEventListener('touchstart',e=>{e.stopPropagation()},{passive:false});info.addEventListener('touchmove',e=>{e.stopPropagation()},{passive:false});info.addEventListener('touchend',e=>{const close=e.target.closest('.close');if(close){hideInfo();e.preventDefault()}e.stopPropagation()},{passive:false});info.addEventListener('touchcancel',e=>{e.stopPropagation()},{passive:false});
 document.getElementById('zin').onclick=()=>setZoom(zoom+1);document.getElementById('zout').onclick=()=>setZoom(zoom-1);marks.addEventListener('click',e=>{const b=e.target.closest('.mark');if(b)showInfo(b.dataset.i)});document.addEventListener('touchstart',e=>{const b=e.target.closest('.mark');tapMark=b;tapStart=e.touches.length===1?{x:e.touches[0].clientX,y:e.touches[0].clientY}:null;if(!b&&!e.target.closest('.info'))hideInfo();if(e.touches.length===2){tapMark=null;if(dragging)endPan();pinchStart={d:distance(e.touches),z:zoom,m:midpoint(e.touches),ratio:1}}else if(e.touches.length===1&&!pinchStart){dragging=true;last={x:e.touches[0].clientX,y:e.touches[0].clientY}}e.preventDefault()},{passive:false});document.addEventListener('touchmove',e=>{if(tapMark&&tapStart&&e.touches.length===1){const dx=e.touches[0].clientX-tapStart.x,dy=e.touches[0].clientY-tapStart.y;if(Math.hypot(dx,dy)>8)tapMark=null}if(e.touches.length===2&&pinchStart){tapMark=null;previewPinch(distance(e.touches)/pinchStart.d,midpoint(e.touches))}else if(dragging&&e.touches.length===1){const p={x:e.touches[0].clientX,y:e.touches[0].clientY};pan(p.x-last.x,p.y-last.y);last=p}e.preventDefault()},{passive:false});document.addEventListener('touchend',e=>{const selectedMark=tapMark;tapMark=null;tapStart=null;if(e.touches.length<2&&pinchStart)commitPinch();if(e.touches.length===0)endPan();if(selectedMark)showInfo(selectedMark.dataset.i)},{passive:false});document.addEventListener('touchcancel',()=>{tapMark=null;tapStart=null;commitPinch();endPan()},{passive:false});document.addEventListener('mousedown',e=>{dragging=true;last={x:e.clientX,y:e.clientY};if(!e.target.closest('.mark')&&!e.target.closest('.info'))hideInfo()});document.addEventListener('mousemove',e=>{if(!dragging)return;pan(e.clientX-last.x,e.clientY-last.y);last={x:e.clientX,y:e.clientY}});document.addEventListener('mouseup',endPan);document.addEventListener('wheel',e=>{hideInfo();setZoom(zoom+(e.deltaY<0?1:-1),e.clientX,e.clientY);e.preventDefault()},{passive:false});window.centerRadar=(lat,lng)=>{hideInfo();center={lat:Number(lat),lng:Number(lng)};zoom=Math.max(zoom,16);draw()};window.addEventListener('resize',draw);draw();
-window.updateAdvisor=(payload)=>{points=points.filter(point=>!point.advisor);if(payload&&Number.isFinite(Number(payload.lat))&&Number.isFinite(Number(payload.lng)))points.push(payload);drawMarks()};
+window.updateAdvisor=(payload)=>{points=points.filter(point=>!point.advisor);if(payload&&Number.isFinite(Number(payload.lat))&&Number.isFinite(Number(payload.lng)))points.push(payload);drawRoute();drawMarks()};
 </script></body></html>`;
 }
 
-export default function MapScreen({ refreshRevision = 0, currentLocation }: { refreshRevision?: number; currentLocation?: { latitude: number; longitude: number; accuracy: number | null } | null }) {
+export default function MapScreen({
+  refreshRevision = 0,
+  currentLocation,
+}: {
+  refreshRevision?: number;
+  currentLocation?: {
+    latitude: number;
+    longitude: number;
+    accuracy: number | null;
+  } | null;
+}) {
   const { api } = useAuth();
   const insets = useSafeAreaInsets();
   const web = useRef<WebView>(null);
@@ -105,33 +148,82 @@ export default function MapScreen({ refreshRevision = 0, currentLocation }: { re
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
-  const points = useMemo(
-    () => all.filter((point) => filter === "TODOS" || point.estado === filter),
-    [all, filter],
-  );
+  const points = useMemo(() => {
+    // 1. Filtrado de estados
+    let filtered = all.filter(
+      (point) => filter === "TODOS" || point.estado === filter
+    );
+
+    // 2. Si no hay ubicación del asesor, devolvemos sin ordenar
+    if (!currentLocation) return filtered;
+
+    // 3. Separamos los PENDIENTES para ordenarlos, y dejamos el resto al final
+    const pending = filtered.filter((p) => p.estado === "PENDIENTE");
+    const others = filtered.filter((p) => p.estado !== "PENDIENTE");
+
+    // 4. Algoritmo de Vecino Más Cercano (Trazado Perfecto)
+    let orderedPending = [];
+    let currLat = currentLocation.latitude;
+    let currLng = currentLocation.longitude;
+    let unvisited = [...pending];
+
+    while (unvisited.length > 0) {
+      // Ordenamos la sublista según la distancia al punto actual
+      unvisited.sort((a, b) => {
+        const distA = getDistanceKm(currLat, currLng, a.latitud, a.longitud);
+        const distB = getDistanceKm(currLat, currLng, b.latitud, b.longitud);
+        return distA - distB;
+      });
+      
+      // Tomamos el más cercano y avanzamos a esa coordenada
+      const closest = unvisited.shift();
+      orderedPending.push(closest);
+      if (closest?.latitud && closest?.longitud) {
+        currLat = closest.latitud;
+        currLng = closest.longitud;
+      }
+    }
+
+    // Le asignamos su turno secuencial para renderizarlo en el pin
+    orderedPending = orderedPending.map((p, index) => ({
+      ...p,
+      orden_ruta: index + 1,
+    }));
+
+    return [...orderedPending, ...others];
+  }, [all, filter, currentLocation]);
 
   const html = useMemo(() => mapHtml(points), [points]);
 
-  const advisorPayload = useMemo(() => currentLocation ? {
-    id: "advisor-self",
-    lat: currentLocation.latitude,
-    lng: currentLocation.longitude,
-    name: "Mi ubicación en tiempo real",
-    dni: "",
-    district: "GPS del dispositivo",
-    address: currentLocation.accuracy
-      ? `Precisión aproximada: ${Math.round(currentLocation.accuracy)} m`
-      : "Ubicación activa",
-    phone: "",
-    debt: 0,
-    advisor: true,
-    label: labels.ASESOR,
-    color: colors.ASESOR,
-  } : null, [currentLocation]);
+  const advisorPayload = useMemo(
+    () =>
+      currentLocation
+        ? {
+            id: "advisor-self",
+            lat: currentLocation.latitude,
+            lng: currentLocation.longitude,
+            name: "Mi ubicación en tiempo real",
+            dni: "",
+            address: currentLocation.accuracy
+              ? `Precisión aproximada: ${Math.round(
+                  currentLocation.accuracy
+                )} m`
+              : "Ubicación activa",
+            phone: "",
+            debt: 0,
+            advisor: true,
+            label: labels.ASESOR,
+            color: colors.ASESOR,
+          }
+        : null,
+    [currentLocation]
+  );
 
   const syncAdvisor = useCallback(() => {
     web.current?.injectJavaScript(
-      `window.updateAdvisor&&window.updateAdvisor(${JSON.stringify(advisorPayload)});true;`,
+      `window.updateAdvisor&&window.updateAdvisor(${JSON.stringify(
+        advisorPayload
+      )});true;`
     );
   }, [advisorPayload]);
 
@@ -139,16 +231,16 @@ export default function MapScreen({ refreshRevision = 0, currentLocation }: { re
     syncAdvisor();
   }, [syncAdvisor]);
 
-const load = useCallback(async () => {
+  const load = useCallback(async () => {
     setLoading(true);
     try {
       setError("");
-      const response: any = await api('/api/campo/ruta-hoy');
+      const response: any = await api("/api/campo/ruta-hoy");
       const next = (response.data?.rutas_clientes || [])
         .map(normalizePoint)
         .filter(
           (point: any) =>
-            Number.isFinite(point.latitud) && Number.isFinite(point.longitud),
+            Number.isFinite(point.latitud) && Number.isFinite(point.longitud)
         );
       setAll(next);
     } catch (e: any) {
@@ -177,7 +269,7 @@ const load = useCallback(async () => {
         accuracy: Location.Accuracy.Balanced,
       });
       web.current?.injectJavaScript(
-        `window.centerRadar(${current.coords.latitude},${current.coords.longitude});true;`,
+        `window.centerRadar(${current.coords.latitude},${current.coords.longitude});true;`
       );
     } catch (e: any) {
       Alert.alert("Ubicación no disponible", e.message);
@@ -191,11 +283,13 @@ const load = useCallback(async () => {
           <View style={s.headText}>
             <Text style={s.title}>Mapa operativo</Text>
             <Text style={s.sub}>
-              {points.length} clientes de tu ruta · OpenStreetMap
+              {points.length} clientes de tu ruta · Trazado Dinámico
             </Text>
           </View>
           <View style={[s.live, error ? s.liveError : null]}>
-            <View style={[s.dot, error ? { backgroundColor: C.red } : null]} />
+            <View
+              style={[s.dot, error ? { backgroundColor: C.red } : null]}
+            />
             <Text style={[s.liveText, error ? { color: C.red } : null]}>
               {loading ? "Actualizando" : error ? "Sin conexión" : "En línea"}
             </Text>
@@ -221,7 +315,9 @@ const load = useCallback(async () => {
                   },
                 ]}
               />
-              <Text style={[s.chipText, filter === item ? s.chipTextOn : null]}>
+              <Text
+                style={[s.chipText, filter === item ? s.chipTextOn : null]}
+              >
                 {labels[item]}
               </Text>
             </Pressable>

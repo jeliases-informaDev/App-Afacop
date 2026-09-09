@@ -271,7 +271,7 @@ export default function RoutesScreen({
       formScrollRef.current?.scrollTo({ y: slot === 1 ? 500 : 700, animated: false });
     }, 250);
   };
-  const status = async (next: string) => {
+const status = async (next: string) => {
     try {
       setSaving(true);
       await api(`/api/campo/rutas/${route.id_ruta}/estado`, {
@@ -280,7 +280,14 @@ export default function RoutesScreen({
       });
       await load();
     } catch (e: any) {
-      Alert.alert("No se pudo actualizar", e.message);
+      if (e.message?.includes("todos los clientes") || e.status === 409) {
+        Alert.alert(
+          "Ruta incompleta",
+          "Debes registrar el resultado de todos los clientes asignados antes de finalizar la jornada."
+        );
+      } else {
+        Alert.alert("No se pudo actualizar", e.message);
+      }
     } finally {
       setSaving(false);
     }
@@ -462,21 +469,36 @@ export default function RoutesScreen({
                 </View>
                 <Badge status={route.estado} />
               </View>
-              {route.estado === "PROGRAMADA" ? (
+                  {route.estado === "PROGRAMADA" ? (
                 <Button
                   title="Iniciar jornada"
                   icon="play"
                   disabled={saving}
                   onPress={() => status("EN_PROCESO")}
                 />
-              ) : route.estado === "EN_PROCESO" ? (
-                <Button
-                  title="Finalizar jornada"
-                  icon="flag-checkered"
-                  disabled={saving}
-                  onPress={() => status("FINALIZADA")}
-                />
-              ) : null}
+              ) : route.estado === "EN_PROCESO" ? (() => {
+                const pendingCount = route.rutas_clientes?.filter(
+                  (item: any) => item.estado_visita === "PENDIENTE"
+                ).length || 0;
+
+                return (
+                  <Button
+                    title={pendingCount > 0 ? `Finalizar jornada (${pendingCount} pendientes)` : "Finalizar jornada"}
+                    icon="flag-checkered"
+                    disabled={saving}
+                    onPress={() => {
+                      if (pendingCount > 0) {
+                        Alert.alert(
+                          "Ruta incompleta",
+                          `Aún tienes ${pendingCount} cliente(s) sin registrar resultado. Debes registrar el resultado de todos los clientes antes de finalizar.`
+                        );
+                        return;
+                      }
+                      status("FINALIZADA");
+                    }}
+                  />
+                );
+              })() : null}  
             </Card>
             <Text style={s.section}>ORDEN DE VISITAS</Text>
             {route.rutas_clientes.map((item: any) => (
