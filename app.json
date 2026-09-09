@@ -61,12 +61,6 @@
       "expo-font",
       "expo-sqlite",
       "expo-background-task"
-    ],
-    "extra": {
-      "eas": {
-        "projectId": "74bdebb3-67cc-4cdd-9d3a-829f9e1c43b7"
-      }
-    },
-    "owner": "informaperus-app"
+    ]
   }
 }
