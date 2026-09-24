@@ -39,11 +39,12 @@ type PendingVisit = {
   amount: string | null;
   photo1_uri: string;
   photo2_uri: string;
-  signature: string;
+  signature_uri: string;
   latitude: number;
   longitude: number;
   photo1_key: string | null;
   photo2_key: string | null;
+  signature_key: string | null;
   attempts: number;
 };
 
@@ -73,11 +74,12 @@ async function database() {
           amount TEXT,
           photo1_uri TEXT NOT NULL,
           photo2_uri TEXT NOT NULL,
-          signature TEXT NOT NULL,
+          signature_uri TEXT NOT NULL,
           latitude REAL NOT NULL,
           longitude REAL NOT NULL,
           photo1_key TEXT,
           photo2_key TEXT,
+          signature_key TEXT,
           attempts INTEGER NOT NULL DEFAULT 0,
           last_error TEXT,
           created_at INTEGER NOT NULL,
@@ -94,15 +96,58 @@ async function database() {
       const columns = await db.getAllAsync<{ name: string }>(
         "PRAGMA table_info(pending_visits)",
       );
-      if (!columns.some((column) => column.name === "advisor_id")) {
+      const columnNames = new Set(columns.map((column) => column.name));
+      if (!columnNames.has("advisor_id")) {
         await db.execAsync(
           "ALTER TABLE pending_visits ADD COLUMN advisor_id INTEGER NOT NULL DEFAULT 0",
         );
+      }
+      if (!columnNames.has("signature_uri")) {
+        // Instalaciones con gestiones ya encoladas: la firma vivía como base64
+        // en la columna "signature". Se agregan las columnas nuevas y se migra
+        // cada firma pendiente a un archivo, sin perder la gestión offline.
+        await db.execAsync(
+          "ALTER TABLE pending_visits ADD COLUMN signature_uri TEXT",
+        );
+        await db.execAsync(
+          "ALTER TABLE pending_visits ADD COLUMN signature_key TEXT",
+        );
+        if (columnNames.has("signature")) {
+          const legacyRows = await db.getAllAsync<{ id: string; signature: string }>(
+            "SELECT id, signature FROM pending_visits WHERE signature_uri IS NULL",
+          );
+          for (const row of legacyRows) {
+            try {
+              const uri = await persistSignature(row.id, row.signature);
+              await db.runAsync(
+                "UPDATE pending_visits SET signature_uri = ? WHERE id = ?",
+                uri,
+                row.id,
+              );
+            } catch {
+              // Se revisa manualmente: no debe bloquear la migración del resto.
+            }
+          }
+        }
       }
       return db;
     });
   }
   return databasePromise;
+}
+
+async function persistSignature(id: string, dataUrl: string) {
+  const match = /^data:image\/png;base64,(.+)$/.exec(dataUrl || "");
+  if (!match) throw new Error("La firma no tiene un formato válido.");
+  const directory = `${FileSystem.documentDirectory}radar360-signatures`;
+  await FileSystem.makeDirectoryAsync(directory, { intermediates: true }).catch(
+    () => {},
+  );
+  const uri = `${directory}/${id}.png`;
+  await FileSystem.writeAsStringAsync(uri, match[1], {
+    encoding: FileSystem.EncodingType.Base64,
+  });
+  return uri;
 }
 
 async function requestJson(path: string, options: RequestInit, token: string) {
@@ -140,30 +185,26 @@ async function requestJson(path: string, options: RequestInit, token: string) {
   }
 }
 
-async function evidenceKey(
-  item: PendingVisit,
-  evidenceNumber: 1 | 2,
+async function uploadEvidenceFile(
+  uri: string,
   token: string,
+  presignBody: {
+    id_cliente: number;
+    id_ruta: number;
+    evidencia: number;
+    tipo: "foto" | "firma";
+    content_type: string;
+  },
+  label: string,
 ) {
-  const uri = evidenceNumber === 1 ? item.photo1_uri : item.photo2_uri;
   const info = await FileSystem.getInfoAsync(uri);
   const size = info.exists && "size" in info ? Number(info.size || 0) : 0;
   if (!info.exists || !size) {
-    throw new Error(`No se encontró la fotografía ${evidenceNumber} almacenada.`);
+    throw new Error(`No se encontró ${label} almacenada.`);
   }
   const signed = await requestJson(
     "/api/campo/evidencias/presign",
-    {
-      method: "POST",
-      body: JSON.stringify({
-        id_cliente: item.client_id,
-        id_ruta: item.route_id,
-        evidencia: evidenceNumber,
-        tipo: "foto",
-        content_type: "image/jpeg",
-        size,
-      }),
-    },
+    { method: "POST", body: JSON.stringify({ ...presignBody, size }) },
     token,
   );
   const upload = await FileSystem.uploadAsync(signed.data.uploadUrl, uri, {
@@ -172,11 +213,44 @@ async function evidenceKey(
     headers: { "Content-Type": signed.data.contentType },
   });
   if (upload.status < 200 || upload.status >= 300) {
-    throw new Error(
-      `No se pudo subir la fotografía ${evidenceNumber} (HTTP ${upload.status}).`,
-    );
+    throw new Error(`No se pudo subir ${label} (HTTP ${upload.status}).`);
   }
   return String(signed.data.key);
+}
+
+async function photoEvidenceKey(
+  item: PendingVisit,
+  evidenceNumber: 1 | 2,
+  token: string,
+) {
+  const uri = evidenceNumber === 1 ? item.photo1_uri : item.photo2_uri;
+  return uploadEvidenceFile(
+    uri,
+    token,
+    {
+      id_cliente: item.client_id,
+      id_ruta: item.route_id,
+      evidencia: evidenceNumber,
+      tipo: "foto",
+      content_type: "image/jpeg",
+    },
+    `la fotografía ${evidenceNumber}`,
+  );
+}
+
+async function signatureEvidenceKey(item: PendingVisit, token: string) {
+  return uploadEvidenceFile(
+    item.signature_uri,
+    token,
+    {
+      id_cliente: item.client_id,
+      id_ruta: item.route_id,
+      evidencia: 1,
+      tipo: "firma",
+      content_type: "image/png",
+    },
+    "la firma",
+  );
 }
 
 async function synchronize(tokenOverride?: string | null): Promise<SyncResult> {
@@ -219,8 +293,9 @@ async function synchronize(tokenOverride?: string | null): Promise<SyncResult> {
     try {
       let photo1Key = item.photo1_key;
       let photo2Key = item.photo2_key;
+      let signatureKey = item.signature_key;
       if (!photo1Key) {
-        photo1Key = await evidenceKey(item, 1, token);
+        photo1Key = await photoEvidenceKey(item, 1, token);
         await db.runAsync(
           "UPDATE pending_visits SET photo1_key = ?, updated_at = ? WHERE id = ?",
           photo1Key,
@@ -229,10 +304,19 @@ async function synchronize(tokenOverride?: string | null): Promise<SyncResult> {
         );
       }
       if (!photo2Key) {
-        photo2Key = await evidenceKey(item, 2, token);
+        photo2Key = await photoEvidenceKey(item, 2, token);
         await db.runAsync(
           "UPDATE pending_visits SET photo2_key = ?, updated_at = ? WHERE id = ?",
           photo2Key,
+          Date.now(),
+          item.id,
+        );
+      }
+      if (!signatureKey) {
+        signatureKey = await signatureEvidenceKey(item, token);
+        await db.runAsync(
+          "UPDATE pending_visits SET signature_key = ?, updated_at = ? WHERE id = ?",
+          signatureKey,
           Date.now(),
           item.id,
         );
@@ -250,7 +334,7 @@ async function synchronize(tokenOverride?: string | null): Promise<SyncResult> {
             monto_recaudado: item.amount,
             foto_evidencia_key: photo1Key,
             foto_adicional_evidencia_key: photo2Key,
-            firma_evidencia: item.signature,
+            firma_evidencia_key: signatureKey,
             latitud: item.latitude,
             longitud: item.longitude,
           }),
@@ -261,6 +345,7 @@ async function synchronize(tokenOverride?: string | null): Promise<SyncResult> {
       await Promise.all([
         FileSystem.deleteAsync(item.photo1_uri, { idempotent: true }).catch(() => {}),
         FileSystem.deleteAsync(item.photo2_uri, { idempotent: true }).catch(() => {}),
+        FileSystem.deleteAsync(item.signature_uri, { idempotent: true }).catch(() => {}),
       ]);
       result.synced += 1;
       result.pending -= 1;
@@ -287,10 +372,11 @@ export function createOfflineVisitId(routeId: number, clientId: number) {
 export async function enqueueVisit(input: QueuedVisitInput) {
   const db = await database();
   const now = Date.now();
+  const signatureUri = await persistSignature(input.id, input.signature);
   await db.runAsync(
     `INSERT OR IGNORE INTO pending_visits (
       id, advisor_id, route_id, client_id, result, observations, amount,
-      photo1_uri, photo2_uri, signature, latitude, longitude,
+      photo1_uri, photo2_uri, signature_uri, latitude, longitude,
       created_at, updated_at
     ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
     input.id,
@@ -302,7 +388,7 @@ export async function enqueueVisit(input: QueuedVisitInput) {
     input.amount,
     input.photo1Uri,
     input.photo2Uri,
-    input.signature,
+    signatureUri,
     input.latitude,
     input.longitude,
     now,
