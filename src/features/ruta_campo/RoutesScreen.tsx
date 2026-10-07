@@ -101,6 +101,7 @@ export default function RoutesScreen({
   const [signatureKey, setSignatureKey] = useState(0);
   const [signing, setSigning] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [confirmingLocation, setConfirmingLocation] = useState(false);
   const [error, setError] = useState("");
   const [offlineMode, setOfflineMode] = useState(false);
   
@@ -334,6 +335,40 @@ export default function RoutesScreen({
       }
     } finally {
       setSaving(false);
+    }
+  };
+
+  const confirmClientLocation = async () => {
+    const clientId = Number(selected?.cliente?.id_cliente);
+    if (!clientId) return;
+    try {
+      setConfirmingLocation(true);
+      const permission = await Location.requestForegroundPermissionsAsync();
+      if (permission.status !== "granted") {
+        throw new Error("Se requiere permiso de ubicación para confirmar el domicilio.");
+      }
+      const position = await Location.getCurrentPositionAsync({
+        accuracy: Location.Accuracy.High,
+      });
+      if (position.mocked) {
+        throw new Error("Por seguridad, desactiva las ubicaciones simuladas para confirmar el domicilio.");
+      }
+      await api(`/api/campo/clientes/${clientId}/ubicacion`, {
+        method: "PATCH",
+        body: JSON.stringify({
+          latitud: position.coords.latitude,
+          longitud: position.coords.longitude,
+          precision: position.coords.accuracy ?? undefined,
+        }),
+      });
+      Alert.alert(
+        "Ubicación confirmada",
+        "Guardamos la ubicación real del domicilio de este cliente.",
+      );
+    } catch (e: any) {
+      Alert.alert("No se pudo confirmar la ubicación", e.message);
+    } finally {
+      setConfirmingLocation(false);
     }
   };
 
@@ -802,6 +837,18 @@ export default function RoutesScreen({
               contentContainerStyle={s.form}
               keyboardShouldPersistTaps="handled"
             >
+              <Pressable
+                onPress={confirmClientLocation}
+                disabled={confirmingLocation}
+                style={[s.locationButton, confirmingLocation && { opacity: 0.6 }]}
+              >
+                <MaterialCommunityIcons name="crosshairs-gps" size={18} color={C.primary} />
+                <Text style={s.locationButtonText}>
+                  {confirmingLocation
+                    ? "Obteniendo ubicación…"
+                    : "Estoy en el domicilio: confirmar ubicación"}
+                </Text>
+              </Pressable>
               <Text style={s.label}>RESULTADO DE VISITA</Text>
               <View style={s.results}>
                 {results.map((item) => (
@@ -1064,6 +1111,22 @@ const s = StyleSheet.create({
     borderRadius: 8,
     gap: 5,
     marginTop: 10,
+  },
+  locationButton: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 8,
+    borderWidth: 1,
+    borderColor: C.primary,
+    borderRadius: 12,
+    paddingVertical: 11,
+    paddingHorizontal: 14,
+  },
+  locationButtonText: {
+    color: C.primary,
+    fontSize: 13,
+    fontWeight: "700",
   },
   navButtonText: {
     color: "#fff",
