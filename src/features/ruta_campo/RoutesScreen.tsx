@@ -23,6 +23,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useAuth } from "../../shared/context/AuthContext";
 import { Badge, Button, Card, Empty, Header, Loading, Screen } from "../../shared/ui/ui";
 import { C, money } from "../../shared/theme/theme";
+import { coordenadasConfiables, textoDireccion } from "../../shared/utils/ubicacion";
 import SignaturePad from "../../features/ruta_campo/components/SignaturePad";
 
 import {
@@ -775,18 +776,25 @@ export default function RoutesScreen({
                         )}
                       </Text>
 
-                      {item.cliente.latitud && item.cliente.longitud && item.estado_visita === "PENDIENTE" ? (
-                        <Pressable 
+                      {item.estado_visita === "PENDIENTE" && (coordenadasConfiables(item.cliente) || item.cliente.direccion) ? (
+                        <Pressable
                           style={s.navButton}
-                          onPress={(e) => {
-                            const url = `https://www.google.com/maps/dir/?api=1&destination=${item.cliente.latitud},${item.cliente.longitud}`;
-                            Linking.openURL(url).catch(() => {
+                          onPress={() => {
+                            // Con un punto confiable se navega por coordenadas; si es aproximado,
+                            // sospechoso o no existe, por la dirección escrita (Google la entiende mejor).
+                            const punto = coordenadasConfiables(item.cliente);
+                            const destino = punto
+                              ? `${punto.latitud},${punto.longitud}`
+                              : encodeURIComponent(textoDireccion(item.cliente));
+                            Linking.openURL(`https://www.google.com/maps/dir/?api=1&destination=${destino}`).catch(() => {
                               Alert.alert("Error", "No se pudo abrir la aplicación de mapas.");
                             });
                           }}
                         >
                           <MaterialCommunityIcons name="directions" size={14} color="#fff" />
-                          <Text style={s.navButtonText}>Cómo llegar</Text>
+                          <Text style={s.navButtonText}>
+                            {coordenadasConfiables(item.cliente) ? "Cómo llegar" : "Cómo llegar (por dirección)"}
+                          </Text>
                         </Pressable>
                       ) : null}
 

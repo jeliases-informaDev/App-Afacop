@@ -6,6 +6,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useAuth } from "../../shared/context/AuthContext";
 import { Badge, Card, Empty, Input, Loading, Screen } from "../../shared/ui/ui";
 import { C, money } from "../../shared/theme/theme";
+import { coordenadasConfiables, textoDireccion } from "../../shared/utils/ubicacion";
 
 const filters = [
   { key: "TODOS", label: "Todos", color: C.primary, background: "#E8EEFF" },
@@ -159,11 +160,11 @@ export default function ClientsScreen({ refreshRevision = 0, onDetailVisibilityC
   }), [all, managed, scheduledToday]);
 
   const openNavigation = useCallback(async (client: any) => {
-    const latitude = Number(client?.latitud);
-    const longitude = Number(client?.longitud);
-    const hasCoordinates = client?.latitud != null && client?.latitud !== "" && client?.longitud != null && client?.longitud !== ""
-      && Number.isFinite(latitude) && Number.isFinite(longitude) && Math.abs(latitude) <= 90 && Math.abs(longitude) <= 180;
-    const address = [client?.direccion, client?.distrito, "Perú"].filter(Boolean).join(", ");
+    const punto = coordenadasConfiables(client);
+    const hasCoordinates = punto !== null;
+    const latitude = punto?.latitud ?? 0;
+    const longitude = punto?.longitud ?? 0;
+    const address = textoDireccion(client);
     if (!hasCoordinates && !client?.direccion) {
       Alert.alert("Ubicación no disponible", "Este cliente todavía no tiene una dirección o coordenadas registradas.");
       return;
