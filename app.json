@@ -25,16 +25,17 @@
     },
     "android": {
       "package": "pe.informaperu.radar360",
-      "versionCode": 6,
-      "minSdkVersion": 24,
-      "targetSdkVersion": 34,
+      "versionCode": 7,
       "softwareKeyboardLayoutMode": "resize",
       "permissions": [
         "android.permission.ACCESS_COARSE_LOCATION",
         "android.permission.ACCESS_FINE_LOCATION",
         "android.permission.CAMERA",
-        "android.permission.INTERNET",
-        "android.permission.RECORD_AUDIO"
+        "android.permission.INTERNET"
+      ],
+      "blockedPermissions": [
+        "android.permission.RECORD_AUDIO",
+        "android.permission.SYSTEM_ALERT_WINDOW"
       ],
       "adaptiveIcon": {
         "backgroundColor": "#FFFFFF",
@@ -63,7 +64,8 @@
       [
         "expo-camera",
         {
-          "cameraPermission": "Mi Radar usa la cámara para registrar las evidencias obligatorias de cada gestión."
+          "cameraPermission": "Mi Radar usa la cámara para registrar las evidencias obligatorias de cada gestión.",
+          "recordAudioAndroid": false
         }
       ],
       "expo-font",
