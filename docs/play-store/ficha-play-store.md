@@ -11,9 +11,9 @@ Todo lo que necesitas copiar o responder en Play Console, en el orden en que lo 
 | Tipo | Aplicación (no juego) |
 | Precio | Gratuita |
 | Categoría | Negocios |
-| Correo de contacto (público) | [CORREO DE SOPORTE] |
+| Correo de contacto (público) | serviciosdigitales@informaperu.com |
 | Sitio web (opcional) | [SITIO WEB DE INFORMAPERÚ] |
-| Política de privacidad | [URL PÚBLICA DE LA POLÍTICA] (ver sección 7) |
+| Política de privacidad | https://afacop-backend.onrender.com/privacidad/radar360 (ver sección 7) |
 | Paquete (applicationId) | `pe.informaperu.radar360` (no se puede cambiar después) |
 
 ## 2. Textos de la ficha
@@ -49,7 +49,7 @@ REQUISITOS
 • Android 7.0 o superior, con cámara trasera y GPS.
 • Una cuenta de asesor entregada por tu empresa.
 
-¿Dudas o soporte? Escríbenos a [CORREO DE SOPORTE].
+¿Dudas o soporte? Escríbenos a serviciosdigitales@informaperu.com.
 ```
 
 No menciones nombres ni logos de entidades financieras (Caja Huancayo, Caja Arequipa, BanBif, etc.) en la ficha ni en las capturas, salvo que tengas su autorización escrita: Google lo trata como suplantación de marca.
@@ -108,7 +108,7 @@ Respuestas generales:
 
 - ¿Recopila o comparte datos del usuario? **Sí**.
 - ¿Los datos se cifran en tránsito? **Sí** (HTTPS).
-- ¿Pueden los usuarios pedir la eliminación de sus datos? **Sí**, escribiendo a [CORREO DE PRIVACIDAD] (la política lo explica).
+- ¿Pueden los usuarios pedir la eliminación de sus datos? **Sí**, escribiendo a serviciosdigitales@informaperu.com (la política lo explica).
 - Cumple la política de familias: **No aplica** (público de 18 años o más).
 
 Datos que declarar (todos: obligatorios, no opcionales; no se procesan de forma efímera):
@@ -147,14 +147,18 @@ Cómo comprobarlo antes de publicar:
 2. Activa el informe de pruebas previas al lanzamiento: Google prueba la app automáticamente en equipos reales de varias marcas y tamaños. Para que pueda iniciar sesión, carga las credenciales demo en «Acceso a la app».
 3. Prueba tú mismo en al menos un Samsung y un Xiaomi o Motorola (los más comunes en Perú), un equipo de gama baja (2 a 3 GB de RAM) y una tablet.
 
-## 7. Política de privacidad: dónde publicarla
+## 7. Política de privacidad: dónde está publicada
 
-Google exige una URL pública, activa, sin inicio de sesión y que no sea un PDF.
+Google exige una URL pública, activa, sin inicio de sesión y que no sea un PDF. La política se sirve desde el backend:
 
-1. Completa los marcadores amarillos de `politica-privacidad.html` (razón social, RUC, domicilio, correo de privacidad, plazo de conservación y código RNPDP si aplica).
-2. Publica el archivo en tu sitio, por ejemplo `https://[TU-DOMINIO]/privacidad/radar360`.
+`https://afacop-backend.onrender.com/privacidad/radar360`
+
+1. Une el PR del backend que publica la página. Render tarda unos minutos en desplegar.
+2. Abre la dirección y comprueba que carga la política completa.
 3. Pega esa URL en Play Console (Contenido de la app → Política de privacidad) y en la ficha de la tienda.
-4. Que un abogado la revise, sobre todo los roles de responsable y encargado y el plazo de conservación.
+4. Que un abogado la revise, sobre todo los roles de responsable y encargado, y el plazo de conservación (hoy dice «el que fijen el contrato con cada entidad y la ley aplicable»).
+
+El texto fuente es `politica-privacidad.md`; el backend sirve una copia del HTML generado. Si cambias uno, actualiza el otro.
 
 ## 8. Camino hasta producción
 
@@ -176,7 +180,7 @@ Con Play App Signing, Google vuelve a firmar la app: si un asesor tiene instalad
 
 ## 10. Pendientes antes de enviar a revisión
 
-- [ ] Completar y publicar la política de privacidad.
+- [ ] Publicar la política (unir el PR del backend y comprobar que abre el enlace).
 - [ ] Confirmar en qué región están Render y Backblaze y, si quieres, precisarlo en la sección 8 de la política (hoy dice «fuera del Perú»).
 - [ ] Definir el plazo de conservación de evidencias.
 - [ ] Crear el asesor demo con los clientes PRUEBA y poner sus credenciales en «Acceso a la app».
