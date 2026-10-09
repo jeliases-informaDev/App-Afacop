@@ -2,11 +2,11 @@
 
 **Última actualización:** 8 de octubre de 2026 · **Versión:** 1.0
 
-> **En resumen.** Radar 360° es una herramienta de trabajo para asesores de cobranza en campo. Solo la usa personal autorizado, con una cuenta entregada por su empresa. Usamos la cámara y la ubicación únicamente cuando registras una visita, confirmas un domicilio o abres el mapa, y solo mientras la aplicación está abierta. Las fotos y firmas se guardan en un almacenamiento privado y cada consulta queda registrada. No vendemos datos ni mostramos publicidad. Para ejercer tus derechos escribe a [CORREO DE PRIVACIDAD].
+> **En resumen.** Radar 360° es una herramienta de trabajo para asesores de cobranza en campo. Solo la usa personal autorizado, con una cuenta entregada por su empresa. Usamos la cámara y la ubicación únicamente cuando registras una visita, confirmas un domicilio o abres el mapa, y solo mientras la aplicación está abierta. Las fotos y firmas se guardan en un almacenamiento privado y cada consulta queda registrada. No vendemos datos ni mostramos publicidad. Para ejercer tus derechos escribe a [serviciosdigitales@informaperu.com](mailto:serviciosdigitales@informaperu.com).
 
 ## 1. Quiénes somos
 
-Radar 360° (en adelante, «la aplicación» o «el servicio») es desarrollada y operada por [RAZÓN SOCIAL], con RUC [RUC] y domicilio en [DOMICILIO LEGAL], Perú (en adelante, «InformaPerú» o «nosotros»).
+Radar 360° (en adelante, «la aplicación» o «el servicio») es desarrollada y operada por InformaPerú, con RUC 20604919321 y domicilio en Av. Petit Thouars 1113, Lince, Lima, Perú (en adelante, «InformaPerú» o «nosotros»).
 
 Nuestro rol depende de qué datos se trate:
 
@@ -91,19 +91,17 @@ Ningún sistema es infalible. Si ocurre un incidente que afecte tus datos, actua
 
 ## 10. Cuánto tiempo conservamos los datos
 
-Conservamos los datos de gestión y las evidencias mientras la entidad contratante mantenga activa la gestión del cliente y, después, durante [PLAZO DE CONSERVACIÓN] para atender reclamos, auditorías y obligaciones legales. Pasado ese plazo se eliminan de forma segura o se anonimizan. Los registros de seguridad se conservan mientras sean necesarios para auditoría y protección del servicio.
+Conservamos los datos de gestión y las evidencias mientras la entidad contratante mantenga activa la gestión del cliente y, después, durante el plazo adicional que fijen el contrato con cada entidad y la ley aplicable, para atender reclamos, auditorías y obligaciones legales. Pasado ese plazo se eliminan de forma segura o se anonimizan. Los registros de seguridad se conservan mientras sean necesarios para auditoría y protección del servicio.
 
 Los datos temporales de tu dispositivo se eliminan al sincronizarse y al desinstalar la aplicación.
 
 ## 11. Tus derechos
 
-Puedes ejercer tus derechos de información, acceso, rectificación, cancelación y oposición escribiendo a [CORREO DE PRIVACIDAD]. Indica tu nombre completo, tu documento de identidad, el derecho que ejerces y el detalle de tu pedido. Responderemos dentro de los plazos que fija la ley.
+Puedes ejercer tus derechos de información, acceso, rectificación, cancelación y oposición escribiendo a [serviciosdigitales@informaperu.com](mailto:serviciosdigitales@informaperu.com). Indica tu nombre completo, tu documento de identidad, el derecho que ejerces y el detalle de tu pedido. Responderemos dentro de los plazos que fija la ley.
 
 - Si tus datos fueron cargados por una entidad financiera porque eres su cliente, esa entidad es la responsable. Te ayudaremos a canalizar tu solicitud con ella.
 - Las cuentas de asesor las crea y da de baja la empresa contratante. Para pedir la baja de tu cuenta o la eliminación de tus datos, escribe al mismo correo. Algunos registros, como la auditoría y las evidencias, pueden conservarse por obligación legal o contractual.
 - Si consideras que no atendimos tu solicitud, puedes presentar un reclamo ante la Autoridad Nacional de Protección de Datos Personales del Ministerio de Justicia y Derechos Humanos.
-
-Código de registro del banco de datos en el RNPDP (si aplica): [CÓDIGO RNPDP].
 
 ## 12. Menores de edad
 
@@ -115,4 +113,4 @@ Si cambiamos esta política, publicaremos la versión nueva en esta misma direcc
 
 ## 14. Contacto
 
-Consultas y ejercicio de derechos: [CORREO DE PRIVACIDAD] · [RAZÓN SOCIAL] · [DOMICILIO LEGAL]
+Consultas y ejercicio de derechos: [serviciosdigitales@informaperu.com](mailto:serviciosdigitales@informaperu.com) · InformaPerú · RUC 20604919321 · Av. Petit Thouars 1113, Lince, Lima, Perú
