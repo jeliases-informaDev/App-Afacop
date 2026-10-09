@@ -3,6 +3,7 @@ import {
   Image,
   KeyboardAvoidingView,
   Platform,
+  Pressable,
   ScrollView,
   StyleSheet,
   Text,
@@ -16,6 +17,7 @@ import { useAuth } from "../../shared/context/AuthContext";
 import { Button, Input } from "../../shared/ui/ui";
 import { C } from "../../shared/theme/theme";
 import { request } from "../../shared/api/api";
+import { abrirPoliticaPrivacidad } from "../../shared/utils/legal";
 
 export default function LoginScreen() {
   const { width } = useWindowDimensions();
@@ -209,6 +211,9 @@ export default function LoginScreen() {
                   }}
                 />
               ) : null}
+              <Pressable onPress={abrirPoliticaPrivacidad} hitSlop={10}>
+                <Text style={s.privacyLink}>Política de privacidad</Text>
+              </Pressable>
               <Text style={s.footer}>Tecnología financiera · Informa Perú</Text>
             </View>
           </View>
@@ -435,5 +440,13 @@ const s = StyleSheet.create({
   secret: { padding: 12, borderRadius: 12, backgroundColor: "#EEF4FF" },
   secretTitle: { fontWeight: "800", color: C.text },
   secretValue: { color: C.primary, marginTop: 6, fontSize: 12 },
+  privacyLink: {
+    textAlign: "center",
+    color: C.primary,
+    fontSize: 11,
+    fontWeight: "700",
+    textDecorationLine: "underline",
+    marginTop: 6,
+  },
   footer: { textAlign: "center", color: "#99A3B3", fontSize: 10, marginTop: 2 },
 });

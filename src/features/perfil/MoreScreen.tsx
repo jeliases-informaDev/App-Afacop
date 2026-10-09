@@ -5,6 +5,7 @@ import { useAuth } from "../../shared/context/AuthContext";
 import { Button, Card, Header, Screen } from "../../shared/ui/ui";
 import { C } from "../../shared/theme/theme";
 import { pendingVisitCount, syncPendingVisits } from "../../shared/sync/offlineSync";
+import { abrirPoliticaPrivacidad } from "../../shared/utils/legal";
 
 const advisorDisplayName = (user: {
   nombres?: string;
@@ -68,9 +69,11 @@ export default function MoreScreen() {
     </Card>
     <Card>
       <Text style={s.sectionLabel}>AJUSTES Y AYUDA</Text>
-      <Pressable onPress={openSettings} style={({ pressed }) => [s.row, pressed && s.pressed]}><View style={[s.rowIcon, s.settingsIcon]}><MaterialCommunityIcons name="cellphone-cog" size={22} color={C.primary} /></View><View style={s.rowCopy}><Text style={s.rowTitle}>Permisos del dispositivo</Text><Text style={s.rowSub}>Administra ubicación, cámara y notificaciones.</Text></View><MaterialCommunityIcons name="chevron-right" size={22} color="#9AA5B5" /></Pressable>
+      <Pressable onPress={openSettings} style={({ pressed }) => [s.row, pressed && s.pressed]}><View style={[s.rowIcon, s.settingsIcon]}><MaterialCommunityIcons name="cellphone-cog" size={22} color={C.primary} /></View><View style={s.rowCopy}><Text style={s.rowTitle}>Permisos del dispositivo</Text><Text style={s.rowSub}>Administra ubicación y cámara.</Text></View><MaterialCommunityIcons name="chevron-right" size={22} color="#9AA5B5" /></Pressable>
       <View style={s.separator} />
       <Pressable onPress={showFieldHelp} style={({ pressed }) => [s.row, pressed && s.pressed]}><View style={[s.rowIcon, s.helpIcon]}><MaterialCommunityIcons name="book-open-variant" size={22} color={C.warning} /></View><View style={s.rowCopy}><Text style={s.rowTitle}>Guía de gestión en campo</Text><Text style={s.rowSub}>Recomendaciones para registrar una visita completa.</Text></View><MaterialCommunityIcons name="chevron-right" size={22} color="#9AA5B5" /></Pressable>
+      <View style={s.separator} />
+      <Pressable onPress={abrirPoliticaPrivacidad} style={({ pressed }) => [s.row, pressed && s.pressed]}><View style={[s.rowIcon, s.settingsIcon]}><MaterialCommunityIcons name="shield-lock-outline" size={22} color={C.primary} /></View><View style={s.rowCopy}><Text style={s.rowTitle}>Política de privacidad</Text><Text style={s.rowSub}>Cómo se tratan tus datos y los de los clientes, y cómo ejercer tus derechos.</Text></View><MaterialCommunityIcons name="chevron-right" size={22} color="#9AA5B5" /></Pressable>
     </Card>
     <Button title="Cerrar sesión" kind="danger" icon="logout" onPress={logout} />
     <Text style={s.version}>Mi Radar 360° Campo · Versión 1.0.5</Text>
