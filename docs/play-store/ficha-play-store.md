@@ -96,7 +96,7 @@ en el recuadro y toca «Guardar y sincronizar».
 La cámara y la ubicación se piden solo al usarlas.
 ```
 
-Crea un asesor demo cuya ruta tenga solo los clientes PRUEBA001 a PRUEBA004, para que el revisor no vea datos reales. Antes de enviar a revisión, confirma que el servidor responde rápido: si el plan de Render se suspende por inactividad, la primera carga puede tardar y el revisor vería un error de conexión.
+Crea un asesor demo cuya ruta tenga solo los clientes PRUEBA001 a PRUEBA004, para que el revisor no vea datos reales. Márcalo como exento de MFA: si el servidor le pide el código del autenticador, el revisor no podrá entrar. Antes de enviar a revisión, confirma que el servidor responde rápido: si el plan de Render se suspende por inactividad, la primera carga puede tardar y el revisor vería un error de conexión.
 
 **Funciones financieras:** Radar 360° no otorga préstamos ni procesa pagos o transferencias; es una herramienta interna de gestión de cobranza. Si el formulario permite «No ofrece funciones financieras», elígelo. Si te obliga a elegir una opción, usa «Otras funciones financieras» y explica: «Herramienta interna para asesores de cobranza; no otorga préstamos ni procesa pagos». El formulario cambia seguido, así que lee las opciones vigentes antes de contestar.
 
@@ -158,11 +158,12 @@ Google exige una URL pública, activa, sin inicio de sesión y que no sea un PDF
 
 ## 8. Camino hasta producción
 
-1. Unir el PR de `app.json` (versionCode 7, permisos limpios, target API 36) y este PR.
-2. Crear la app en Play Console y completar las secciones 1 a 5 de esta ficha.
-3. Subir el AAB de producción a **Pruebas internas** (hasta 100 testers, disponible al instante) y probar en equipos reales.
-4. Si la cuenta es personal (creada después del 13 de noviembre de 2023): pasar a **Pruebas cerradas** con al menos 12 testers durante 14 días seguidos y luego pedir el acceso a producción. Las pruebas internas no cuentan para este requisito. Si la cuenta es de organización, no aplica.
-5. Publicar en producción.
+Detalle completo, plantillas y textos de la solicitud: [prueba-cerrada-y-produccion.md](prueba-cerrada-y-produccion.md).
+
+1. Crear la app en Play Console y completar las secciones 1 a 5 de esta ficha.
+2. Subir un AAB a **Pruebas internas** (hasta 100 testers, disponible al instante) y probar en equipos reales. Las pruebas internas no cuentan para el requisito de Google.
+3. Subir la versión con el enlace a la política y el aviso al firmar (versionCode 8) a **Pruebas cerradas**, con 12 testers o más durante 14 días seguidos (cuentas personales creadas después del 13 de noviembre de 2023; si la cuenta es de organización, no aplica).
+4. Pulsar «Solicitar acceso a producción» en el Panel y, cuando Google lo apruebe, publicar en **Producción**.
 
 Con Play App Signing, Google vuelve a firmar la app: si un asesor tiene instalado el APK de pruebas, debe desinstalarlo antes de instalar la versión de Play.
 

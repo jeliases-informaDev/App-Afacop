@@ -25,7 +25,7 @@
     },
     "android": {
       "package": "pe.informaperu.radar360",
-      "versionCode": 7,
+      "versionCode": 8,
       "softwareKeyboardLayoutMode": "resize",
       "permissions": [
         "android.permission.ACCESS_COARSE_LOCATION",

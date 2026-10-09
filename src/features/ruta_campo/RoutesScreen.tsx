@@ -24,6 +24,7 @@ import { useAuth } from "../../shared/context/AuthContext";
 import { Badge, Button, Card, Empty, Header, Loading, Screen } from "../../shared/ui/ui";
 import { C, money } from "../../shared/theme/theme";
 import { coordenadasConfiables, textoDireccion } from "../../shared/utils/ubicacion";
+import { AVISO_PRIVACIDAD_FIRMA, abrirPoliticaPrivacidad } from "../../shared/utils/legal";
 import SignaturePad from "../../features/ruta_campo/components/SignaturePad";
 
 import {
@@ -965,6 +966,19 @@ export default function RoutesScreen({
                   </Pressable>
                 ) : null}
               </View>
+              <View style={s.privacyNotice}>
+                <MaterialCommunityIcons
+                  name="shield-account-outline"
+                  size={18}
+                  color={C.primary}
+                />
+                <Text style={s.privacyNoticeText}>
+                  {AVISO_PRIVACIDAD_FIRMA}{" "}
+                  <Text style={s.privacyNoticeLink} onPress={abrirPoliticaPrivacidad}>
+                    Ver política de privacidad
+                  </Text>
+                </Text>
+              </View>
               <View style={s.gps}>
                 <MaterialCommunityIcons
                   name="crosshairs-gps"
@@ -1202,6 +1216,16 @@ const s = StyleSheet.create({
     borderRadius: 13,
   },
   gpsText: { flex: 1, fontSize: 11, color: C.success, fontWeight: "700" },
+  privacyNotice: {
+    flexDirection: "row",
+    alignItems: "flex-start",
+    gap: 8,
+    backgroundColor: "#F3F6FF",
+    padding: 12,
+    borderRadius: 13,
+  },
+  privacyNoticeText: { flex: 1, fontSize: 10.5, lineHeight: 15, color: C.muted },
+  privacyNoticeLink: { color: C.primary, fontWeight: "800", textDecorationLine: "underline" },
   evidence: {
     minHeight: 150,
     borderWidth: 1,
