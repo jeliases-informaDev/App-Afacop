@@ -13,7 +13,7 @@ Todo lo que necesitas copiar o responder en Play Console, en el orden en que lo 
 | Categoría | Negocios |
 | Correo de contacto (público) | serviciosdigitales@informaperu.com |
 | Sitio web (opcional) | [SITIO WEB DE INFORMAPERÚ] |
-| Política de privacidad | https://afacop-backend.onrender.com/privacidad/radar360 (ver sección 7) |
+| Política de privacidad | https://api-miradar360.sulotec.com/privacidad/radar360 (ver sección 7) |
 | Paquete (applicationId) | `pe.informaperu.radar360` (no se puede cambiar después) |
 
 ## 2. Textos de la ficha
@@ -151,7 +151,7 @@ Cómo comprobarlo antes de publicar:
 
 Google exige una URL pública, activa, sin inicio de sesión y que no sea un PDF. La política se sirve desde el backend:
 
-`https://afacop-backend.onrender.com/privacidad/radar360`
+`https://api-miradar360.sulotec.com/privacidad/radar360`
 
 1. Une el PR del backend que publica la página. Render tarda unos minutos en desplegar.
 2. Abre la dirección y comprueba que carga la política completa.

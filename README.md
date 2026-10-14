@@ -47,7 +47,7 @@
 Duplica el archivo .env.example y renómbralo a .env:
 
 Fragmento de código
-EXPO_PUBLIC_API_URL=[https://afacop-backend.onrender.com](https://afacop-backend.onrender.com)
+EXPO_PUBLIC_API_URL=[https://api-miradar360.sulotec.com](https://api-miradar360.sulotec.com)
 Inicia el servidor de desarrollo según tu plataforma:
 
 Emulador Android: Asegúrate de usar EXPO_PUBLIC_API_URL=http://10.0.2.2:4001.

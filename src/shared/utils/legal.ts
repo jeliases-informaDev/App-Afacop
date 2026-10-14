@@ -3,7 +3,7 @@ import { Alert, Linking } from "react-native";
 // Google Play exige que la política de privacidad sea accesible dentro de la propia app,
 // además de estar enlazada en la ficha de la tienda. Si la dirección cambia, se actualiza aquí.
 export const POLITICA_PRIVACIDAD_URL =
-  "https://afacop-backend.onrender.com/privacidad/radar360";
+  "https://api-miradar360.sulotec.com/privacidad/radar360";
 
 // Aviso junto a la firma: es el momento en que el cliente entrega sus datos. Texto en
 // borrador: debe validarlo el área legal o la entidad contratante.
