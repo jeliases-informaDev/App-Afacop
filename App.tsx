@@ -1,13 +1,16 @@
 import React, { useCallback, useEffect, useState } from "react";
 import {
   ActivityIndicator,
+  Dimensions,
   Linking,
+  Platform,
   Pressable,
   StyleSheet,
   Text,
   View,
 } from "react-native";
 import { StatusBar } from "expo-status-bar";
+import * as ScreenOrientation from "expo-screen-orientation";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
 import {
@@ -167,7 +170,17 @@ function Shell() {
     </View>
   );
 }
+// Los teléfonos se quedan en vertical, como siempre. El bloqueo ya no va en el manifiesto (Play lo observa y Android 16 lo ignora en tablets y
+// plegables): en pantallas grandes la app gira libre y los SafeArea y los ScrollView acomodan el contenido.
+const ANCHO_TABLET_DP = 600;
+function bloquearVerticalEnTelefonos() {
+  const { width, height } = Dimensions.get("screen");
+  if (Platform.OS !== "android" || Math.min(width, height) >= ANCHO_TABLET_DP) return;
+  ScreenOrientation.lockAsync(ScreenOrientation.OrientationLock.PORTRAIT_UP).catch(() => {});
+}
+
 export default function App() {
+  useEffect(() => { bloquearVerticalEnTelefonos(); }, []);
   return (
     <SafeAreaProvider>
       <AuthProvider>

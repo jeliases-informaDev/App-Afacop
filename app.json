@@ -2,17 +2,11 @@
   "expo": {
     "name": "Radar 360°",
     "slug": "informaperu",
-    "version": "1.0.6",
-    "orientation": "portrait",
+    "version": "1.0.7",
+    "orientation": "default",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "light",
     "backgroundColor": "#F4F7FD",
-    "androidStatusBar": {
-      "barStyle": "dark-content",
-      "backgroundColor": "#F4F7FD",
-      "translucent": false,
-      "hidden": false
-    },
     "scheme": "radar360",
     "updates": {
       "url": "https://u.expo.dev/1fc35bfa-b454-4c15-9e3a-f494f6263b25"
@@ -25,7 +19,7 @@
     },
     "android": {
       "package": "pe.informaperu.radar360",
-      "versionCode": 9,
+      "versionCode": 10,
       "softwareKeyboardLayoutMode": "resize",
       "permissions": [
         "android.permission.ACCESS_COARSE_LOCATION",
@@ -70,7 +64,16 @@
       ],
       "expo-font",
       "expo-sqlite",
-      "expo-background-task"
+      "expo-background-task",
+      [
+        "expo-build-properties",
+        {
+          "android": {
+            "enableMinifyInReleaseBuilds": true,
+            "enableShrinkResourcesInReleaseBuilds": true
+          }
+        }
+      ]
     ],
     "extra": {
       "eas": {

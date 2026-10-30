@@ -127,3 +127,15 @@ Si Google no aprueba, sigue con la prueba cerrada, corrige lo que indique el cor
 - [Configurar una prueba abierta, cerrada o interna](https://support.google.com/googleplay/android-developer/answer/9845334?hl=en)
 
 Google cambia estas reglas de vez en cuando: confirma los números en la página oficial antes de empezar.
+
+## Observaciones de Play Console para la siguiente versión (resueltas en la 1.0.7)
+
+Play Console marcó tres cosas en la 1.0.6 (9); así quedaron en la 1.0.7 (10):
+
+| Observación | Qué era | Qué se hizo |
+|---|---|---|
+| Optimización del código DEX por debajo del umbral (ofuscación 0 %; plazo feb 2027) | Las compilaciones de release salían sin R8 | `expo-build-properties` con `enableMinifyInReleaseBuilds` y `enableShrinkResourcesInReleaseBuilds` en `app.json`: el código nativo se ofusca y se recorta |
+| APIs o parámetros obsoletos para la pantalla de borde a borde | El bloque `androidStatusBar` de `app.json` ya no tiene efecto con el SDK 57 y generaba parámetros obsoletos | Se quitó; el estilo de la barra lo pone `<StatusBar>` en `App.tsx` y `expo-system-ui` aplica el color de fondo bajo las barras. Lo que quede del aviso viene de React Native por dentro y no bloquea nada |
+| Restricciones de orientación y tamaño (pantallas grandes, Android 16) | `orientation: portrait` bloqueaba en el manifiesto | `orientation: default`; los teléfonos se bloquean en vertical al arrancar (`expo-screen-orientation`, ancho menor < 600 dp) y las tablets giran libres |
+
+**Antes de publicar cada versión con R8:** instalar el APK del perfil `preview` (es una compilación de release, con la misma ofuscación) y probar iniciar sesión, mapa, ruta, registrar una gestión con 2 fotos y firma, y la sincronización sin conexión. Si algo falla por la ofuscación, se agregan reglas en `extraProguardRules` del mismo plugin.
